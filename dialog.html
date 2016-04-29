@@ -20,18 +20,7 @@
     <div class="dialog-header">
         <div class="dialog-description">Split work item </div>
         <h2 id="header">Register now</h2>
-        <p>
-            <label>Name:</label>
-            <input id="inpName" />
-        </p>
-        <p>
-            <label>Data of birth:</label>
-            <input id="inpDob" />
-        </p>
-        <p>
-            <label>Email address:</label>
-            <input id="inpEmail" />
-        </p>
+        <div class="dialog-content"></div>
     </div>
     
     <script type="text/javascript">
@@ -45,40 +34,42 @@
 
                 function inputChanged() {
                     // Execute registered callbacks
-                    for(var i = 0; i < callbacks.length; i++) {
-                        callbacks[i](isValid());
-                    }
+                    // for(var i = 0; i < callbacks.length; i++) {
+                    //     callbacks[i](isValid());
+                    // }
                 }
 
                 function isValid() {
                     // Check whether form is valid or not
-                    return !!(name.value) && !!(dateOfBirth.value) && !!(email.value);
+                    // return !!(name.value) && !!(dateOfBirth.value) && !!(email.value);
                 }
 
-                function getFormData() {
+                function buildChildDivs(childWorkItems) {
                     // Get form values
-                    return {
-                        name: name.value,
-                        dateOfBirth: dateOfBirth.value,
-                        email: email.value  
-                    };
+                 
+                    var $content = $(".dialog-content");
+                     $content.append("<label>These unfinished tasks will be moved to your new work item, remove any you do not want to be moved.</label>")
+            
+            
+                    var $taskGrid = $("<div>").addClass("task-grid");
+                    
+                    for(var i = 0; i < childWorkItems.length; i++) {
+                        
+                        var child = childWorkItems[i];
+                        
+                        var title = child.fields["System.Title"];
+                        $taskGrid.append($("<div>").addClass("task-container").append("<label>" + title + "</label>"));
+                    }
+                    $content.append($taskGrid);
                 }
-
-                var name = document.getElementById("inpName");
-                var dateOfBirth = document.getElementById("inpDob");
-                var email = document.getElementById("inpEmail");
-
-                name.addEventListener("change", inputChanged);
-                dateOfBirth.addEventListener("change", inputChanged);
-                email.addEventListener("change", inputChanged);
-
+                
                 VSS.notifyLoadSucceeded();
                 return {
                     isFormValid: function() {
                         return isValid();   
                     },
-                    getFormData: function() {
-                        return getFormData();
+                    buildChildDivs: function(childWorkItems) {
+                        buildChildDivs(childWorkItems);
                     },
                     attachFormChanged: function(cb) {
                          callbacks.push(cb);

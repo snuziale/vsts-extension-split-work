@@ -28,20 +28,8 @@ var actionProvider = {
                     || (actionContext.workItemIds && actionContext.workItemIds.length > 0 && actionContext.workItemIds[0]);
                     
                 if (workItemId) {
-                    VSS.require(["VSS/Service", "TFS/WorkItemTracking/RestClient", "TFS/WorkItemTracking/Contracts"], function (VSS_Service, TFS_Wit_WebApi, WIT_Contracts) {
-                        // Get the REST client
-                        var witClient = VSS_Service.getCollectionClient(TFS_Wit_WebApi.WorkItemTrackingHttpClient);
-                        // ...
-                        witClient.getWorkItems([workItemId], null, null, WIT_Contracts.QueryExpand[3]).then(
-                             (workItems) => {
-                                var workItem = workItems[0];
-                                var childIds = parseIds(workItem);
-                                
-                                witClient.getWorkItems(childIds).then((childWorkItems) => {
-                                    new SplitWorkDialog().showDialog(childWorkItems);
-                                })
-                            });
-                    });
+                    
+                    new SplitWorkDialog().showDialog(workItemId);
                 }
                 
             }
@@ -53,7 +41,7 @@ var actionProvider = {
 
 export class SplitWorkDialog { 
     
-    public showDialog(childWorkItems) {
+    public showDialog(workItemId) {
         VSS.getService(VSS.ServiceIds.Dialog).then((dialogSvc: IHostDialogService) => {
             // contribution info
             var extInfo = VSS.getExtensionContext();
@@ -64,18 +52,7 @@ export class SplitWorkDialog {
                 
             };
             
-            var $subtitle = $("<div>").append("<label>These unfinished tasks will be moved to your new work item, remove any you do not want to be moved.</label>")
-            
-            
-            var $taskGrid = $("<div>").addClass("task-grid");
-            
-            for(var i = 0; i < childWorkItems.length; i++) {
-                
-                var child = childWorkItems[i];
-                
-                var title = child.fields["System.Title"];
-                $taskGrid.append($("<div>").addClass("task-container").append("<label>" + title + "</label>"));
-            }
+           
             
             
             var dialogOptions = {
@@ -87,13 +64,33 @@ export class SplitWorkDialog {
                 okCallback: dialogOkCallback,
                 // content: $taskGrid,
                 defaultButton: "ok",
-                publisherId: dialogContributionId
+                urlReplacementObject: { id: workItemId }
             };
             // VSS.require(["VSS/Controls/Dialogs"], function (Dialogs) {
             //    Dialogs.show(Dialogs.ModalDialog, dialogOptions); 
             // });
             dialogSvc.openDialog(dialogContributionId, dialogOptions).then((dialog) => {
                 // do something
+               
+               var parentId =(<any>dialog)._id;
+               VSS.require(["VSS/Service", "TFS/WorkItemTracking/RestClient", "TFS/WorkItemTracking/Contracts"], function (VSS_Service, TFS_Wit_WebApi, WIT_Contracts) {
+                        // Get the REST client
+                        var witClient = VSS_Service.getCollectionClient(TFS_Wit_WebApi.WorkItemTrackingHttpClient);
+                        // ...
+                        witClient.getWorkItems([parentId], null, null, WIT_Contracts.QueryExpand[3]).then(
+                             (workItems) => {
+                                var workItem = workItems[0];
+                                var childIds = parseIds(workItem);
+                                
+                                witClient.getWorkItems(childIds).then((childWorkItems) => {
+                                    // new SplitWorkDialog().showDialog(childWorkItems);
+                                    
+                                    dialog.getContributionInstance("split-work-dialog").then(function (splitWorkDialog) {
+                                        (<any>splitWorkDialog).buildChildDivs(childWorkItems);
+                                    });
+                                })
+                            });
+                    });
             })
         })
     }
