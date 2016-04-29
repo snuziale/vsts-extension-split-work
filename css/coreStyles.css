@@ -1,0 +1,28 @@
+.dialog-description { 
+    font-size: 1.2em;
+    margin-bottom: 20px;
+}
+
+.task-container {
+    margin-bottom: 5px;
+    height: 20px;
+    line-height: 15px;
+    color: black;
+    overflow: hidden;
+}
+
+.task-grid {
+    
+    border: 1px dashed grey;
+    overflow-x: hidden;
+    height: 200px;
+    overflow-y: scroll;
+}
+.color-bar {
+    background-color: yellow;
+    height: 15px;
+    width: 8px;
+    display: inline-block;
+    margin-left: 5px;
+    margin-right: 5px;
+}
