@@ -172,7 +172,6 @@ function split(id: number, childIdsToMove: number[]): IPromise<any> {
 
             return findNextIteration(sourceWorkItem).then(iterationPath => {
                 return createWorkItem(sourceWorkItem, iterationPath).then((targetWorkItem) => {
-                    alert(targetWorkItem.id);
                     return updateLinkRelations(sourceWorkItem, targetWorkItem, childIdsToMove).then(() => {
                         return updateIterationPath(childIdsToMove, iterationPath).then(() => {
                             // all done!!
