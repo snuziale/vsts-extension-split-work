@@ -26,3 +26,8 @@
     margin-left: 5px;
     margin-right: 5px;
 }
+
+.no-children {
+    height: 200px;
+    background: url("../img/no-children.png") no-repeat center;
+}

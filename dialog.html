@@ -1,28 +1,15 @@
-<!-----------------------------------------------------------------------
- <copyright file="dialog.html">
-    This code is licensed under the MIT License.
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
-    ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
-    TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
-    PARTICULAR PURPOSE AND NONINFRINGEMENT.
-</copyright>
-<summary>
-    Content of the dialog that gets shown when the user wants to create a new folder.
-</summary>
------------------------------------------------------------------------>
 <!DOCTYPE html>
 <html>
 <head>
     <title>Split work item</title>
     <script src="scripts/VSS.SDK.min.js"></script>
     <link rel="stylesheet" type="text/css" href="css/coreStyles.css">
-
 </head>
 <body>
     <div class="dialog-header">
-        <div class="dialog-description">These unfinished tasks will be moved to your new work item, remove any you do not want to be moved.</div>
-        
-        <div class="dialog-content"></div>
+        <div class="dialog-description">Below are the incomplete items for this work item.  Split to continue them in your next sprint.</div>
+        <div class="dialog-content">
+        </div>
     </div>
     
     <script type="text/javascript">
@@ -32,19 +19,7 @@
             usePlatformStyles: true
         });
          var registrationForm = (function() {
-                var callbacks = [];
                 var currentChildWorkItems;
-                function inputChanged() {
-                    // Execute registered callbacks
-                    // for(var i = 0; i < callbacks.length; i++) {
-                    //     callbacks[i](isValid());
-                    // }
-                }
-
-                function isValid() {
-                    // Check whether form is valid or not
-                    // return !!(name.value) && !!(dateOfBirth.value) && !!(email.value);
-                }
                 
                 var parseChildWorkItems = (childWorkItems) => {
                     var ids = [];
@@ -60,43 +35,41 @@
                     // Get form values
                     currentChildWorkItems = childWorkItems;
                     var $content = $(".dialog-content");
-            
-            
+
                     var $taskGrid = $("<div>").addClass("task-grid");
-                    
+
                     for(var i = 0; i < childWorkItems.length; i++) {
-                        
+
                         var child = childWorkItems[i];
-                        
+
                         var title = child.fields["System.Title"];
                         var $taskContainer = $("<div>").addClass("task-container");
-                        $taskContainer.append($("<div>").addClass("color-bar"))
-                        $taskContainer.append("<label>" + title + "</label>")
+                        $taskContainer.append($("<div>").addClass("color-bar"));
+                        $taskContainer.append("<label>" + title + "</label>");
                         $taskGrid.append($taskContainer);
                     }
                     $content.append($taskGrid);
                 }
-                
+
+                function setNoChildResults() {
+                    var $content = $(".dialog-content");
+                    $content.addClass("no-children");
+                    $(".dialog-description").text("These are no children to be split from this work item.");
+                }
+
                 VSS.notifyLoadSucceeded();
                 return {
-                    isFormValid: function() {
-                        return isValid();   
-                    },
                     buildChildDivs: function(childWorkItems) {
                         buildChildDivs(childWorkItems);
                     },
-                    attachFormChanged: function(cb) {
-                         callbacks.push(cb);
-                    },
                     getIDs: function() {
                         return parseChildWorkItems(currentChildWorkItems);
-                    }
+                    },
+                    setNoChildResults: setNoChildResults
                 };
-                
-                
             })();
+
         // Register form object to be used accross this extension
-        
         VSS.register("split-work-dialog", registrationForm);
     </script>
 </body>

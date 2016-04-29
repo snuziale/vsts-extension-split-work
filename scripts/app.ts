@@ -55,7 +55,6 @@ function removeLinks(workItem: TFS_Wit_Contracts.WorkItem, linkedWorkItemIds: nu
         patchDocument.push(createRelationPatchBlock(index));
     });
 
-
     return TFS_Wit_Client.getClient().updateWorkItem(patchDocument, workItem.id);
 }
 
@@ -201,76 +200,81 @@ function parseIds(workItem) {
     return ids;
 }
 
-export class SplitWorkDialog {
+function showSplitDialog(workItemId: number) {
+    VSS.getService(VSS.ServiceIds.Dialog).then((dialogSvc: IHostDialogService) => {
+        // contribution info
+        var extInfo = VSS.getExtensionContext();
+        var dialogContributionId = extInfo.publisherId + "." + extInfo.extensionId + "." + "split-work-dialog";
+        var theDialog: IExternalDialog;
+        var mySplitDialog: any; // TODO: interface this
 
-    public showDialog(workItemId: number) {
-        VSS.getService(VSS.ServiceIds.Dialog).then((dialogSvc: IHostDialogService) => {
-            // contribution info
-            var extInfo = VSS.getExtensionContext();
-            var dialogContributionId = extInfo.publisherId + "." + extInfo.extensionId + "." + "split-work-dialog";
-            var theDialog: IExternalDialog;
-            var mySplitDialog;
-            var dialogOkCallback = (): any => {
-                var ids = mySplitDialog.getIDs().then((ids) => {
-                    split(workItemId, ids).then(() => {
-                        // TODO: show that we are saving....
-                        theDialog.close();
+        var dialogOkCallback = (): any => {
+            var ids = mySplitDialog.getIDs().then((ids) => {
+                split(workItemId, ids).then(() => {
+                    // TODO: show that we are saving....
+                    theDialog.close();
+                });
+            });
+        };
+
+        var dialogOptions = {
+            title: "Split work item",
+            draggable: true,
+            modal: true,
+            okText: "Split",
+            cancelText: "Cancel",
+            height: 400,
+            width: 500,
+            resizable: false,
+            // okCallback: dialogOkCallback,
+            getDialogResult: dialogOkCallback,
+            defaultButton: "ok",
+            urlReplacementObject: { id: workItemId }
+        };
+
+        dialogSvc.openDialog(dialogContributionId, dialogOptions).then((dialog: IExternalDialog) => {
+
+            theDialog = dialog;
+            var parentId = (<any>dialog)._options.urlReplacementObject.id;
+
+            TFS_Wit_Client.getClient().getWorkItem(parentId, null, null, <any>"all").then(workItem => {
+                var childIds = parseIds(workItem);
+
+                var checkChildrenToSplit = () => {
+
+                };
+                if (childIds.length === 0) {
+                    dialog.getContributionInstance("split-work-dialog").then(splitWorkDialog => {
+                        mySplitDialog = splitWorkDialog;
+                        mySplitDialog.setNoChildResults();
                     });
-                });
-            };
+                }
+                else {
+                    TFS_Wit_Client.getClient().getWorkItems(childIds).then(childWorkItems => {
 
-            var dialogOptions = {
-                title: "Split",
-                draggable: true,
-                modal: true,
-                okText: "Split",
-                cancelText: "Cancel",
-                height: 400,
-                width: 500,
-                resizable: false,
-                // okCallback: dialogOkCallback,
-                getDialogResult: dialogOkCallback,
-                defaultButton: "ok",
-                urlReplacementObject: { id: workItemId }
-            };
-            // VSS.require(["VSS/Controls/Dialogs"], function (Dialogs) {
-            //    Dialogs.show(Dialogs.ModalDialog, dialogOptions); 
-            // });
-            dialogSvc.openDialog(dialogContributionId, dialogOptions).then((dialog: IExternalDialog) => {
-                // do something
-                theDialog = dialog;
-                var parentId = (<any>dialog)._options.urlReplacementObject.id;
-                VSS.require(["VSS/Service", "TFS/WorkItemTracking/RestClient", "TFS/WorkItemTracking/Contracts"], function (VSS_Service, TFS_Wit_WebApi, WIT_Contracts) {
-                    // Get the REST client
-                    var witClient = VSS_Service.getCollectionClient(TFS_Wit_WebApi.WorkItemTrackingHttpClient);
-                    // ...
-                    witClient.getWorkItems([parentId], null, null, WIT_Contracts.QueryExpand[3]).then(
-                        (workItems) => {
-                            var workItem = workItems[0];
-                            var childIds = parseIds(workItem);
+                        var openChildWorkItems = [];
+                        for (var i = 0; i < childWorkItems.length; i++) {
+                            if (childWorkItems[i].fields["System.State"] !== "Closed") { // TODO: does not work across all process templates (what about Cut state?)
+                                openChildWorkItems.push(childWorkItems[i])
+                            }
+                        }
 
-                            witClient.getWorkItems(childIds).then((childWorkItems) => {
-
-                                var openChildWorkItems = [];
-                                for (var i = 0; i < childWorkItems.length; i++) {
-                                    if (childWorkItems[i].fields["System.State"] !== "Closed") {
-                                        openChildWorkItems.push(childWorkItems[i])
-                                    }
-                                }
-                                dialog.getContributionInstance("split-work-dialog").then(function (splitWorkDialog) {
-                                    mySplitDialog = splitWorkDialog;
-                                    (<any>splitWorkDialog).buildChildDivs(openChildWorkItems);
-                                });
+                        dialog.getContributionInstance("split-work-dialog").then(splitWorkDialog => {
+                            mySplitDialog = splitWorkDialog;
+                            if (openChildWorkItems.length > 0) {
+                                mySplitDialog.buildChildDivs(openChildWorkItems);
                                 dialog.updateOkButton(true);
-                            })
+                            }
+                            else {
+                                mySplitDialog.setNoChildResults();
+                            }
                         });
-                });
-            })
-        })
-    }
+                    });
+                }
+            });
+        });
+    });
 }
-
-
 
 var actionProvider = {
     getMenuItems: (context) => {
@@ -283,7 +287,7 @@ var actionProvider = {
                     || (actionContext.workItemIds && actionContext.workItemIds.length > 0 && actionContext.workItemIds[0]);
 
                 if (workItemId) {
-                    new SplitWorkDialog().showDialog(workItemId);
+                    showSplitDialog(workItemId);
                 }
             }
         }];
