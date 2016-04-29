@@ -75,8 +75,7 @@ function addRelations(workItem: TFS_Wit_Contracts.WorkItem, relations: TFS_Wit_C
     return TFS_Wit_Client.getClient().updateWorkItem(patchDocument, workItem.id);
 }
 
-function updateLinkRelations(sourceWorkItem: TFS_Wit_Contracts.WorkItem, targetWorkItem: TFS_Wit_Contracts.WorkItem, idsToMove?: number[]): IPromise<TFS_Wit_Contracts.WorkItem> {
-    var childRelations = sourceWorkItem.relations.filter(relation => relation.rel === "System.LinkTypes.Hierarchy-Forward");
+function updateLinkRelations(sourceWorkItem: TFS_Wit_Contracts.WorkItem, targetWorkItem: TFS_Wit_Contracts.WorkItem, childIdsToMove: number[]): IPromise<TFS_Wit_Contracts.WorkItem> {
     var parentRelation = sourceWorkItem.relations.filter(relation => relation.rel === "System.LinkTypes.Hierarchy-Reverse");
     var attachmentRelations = sourceWorkItem.relations.filter(relation => relation.rel === "AttachedFile").map(relation => {
         return <TFS_Wit_Contracts.WorkItemRelation>{
@@ -91,16 +90,16 @@ function updateLinkRelations(sourceWorkItem: TFS_Wit_Contracts.WorkItem, targetW
             }
         };
     });
-
-    // TODO: Filter childRelations based on provided child ids...
-
-    var childIds = childRelations.map(relation => {
-        var url = relation.url;
-        return parseInt(url.substr(url.lastIndexOf("/") + 1), 10);
+    var childRelations = sourceWorkItem.relations.filter(relation => {
+        if (relation.rel === "System.LinkTypes.Hierarchy-Forward") {
+            var url = relation.url;
+            var id = parseInt(url.substr(url.lastIndexOf("/") + 1), 10);
+            return childIdsToMove.indexOf(id) > -1;
+        } 
+        return false;
     });
 
-
-    return removeLinks(sourceWorkItem, childIds, targetWorkItem.id).then(() => {
+    return removeLinks(sourceWorkItem, childIdsToMove, targetWorkItem.id).then(() => {
         var relationsToAdd = parentRelation.concat(childRelations).concat(attachmentRelations);
         return addRelations(targetWorkItem, relationsToAdd).then(() => {
 
@@ -128,7 +127,7 @@ function createWorkItem(workItem: TFS_Wit_Contracts.WorkItem, iterationPath?: st
         else {
             patchDocument.push(createFieldPatchBlock(field, workItem.fields[field]));
         }
-    })
+    });
     // TODO: revisit
     var comment = `This item was <a href="http://bing.com" target="_blank">split</a> from #${workItem.id}: ${workItem.fields["System.Title"]}`;
     patchDocument.push(createFieldPatchBlock("System.History", comment));
@@ -165,16 +164,16 @@ function findNextIteration(sourceWorkItem: TFS_Wit_Contracts.WorkItem): IPromise
     });
 }
 
-function split(id: number, childIdsToMove: number[]) {
+function split(id: number, childIdsToMove: number[]): IPromise<any> {
 
-    TFS_Wit_Client.getClient().getWorkItem(id, null, null, <any>"all" /*TFS_Wit_Contracts.WorkItemExpand.All*/)    // TODO: Bug - TFS_Wit_Contracts.WorkItemExpand.All should be a string value or REST API should handle enum value.
+    return TFS_Wit_Client.getClient().getWorkItem(id, null, null, <any>"all" /*TFS_Wit_Contracts.WorkItemExpand.All*/)    // TODO: Bug - TFS_Wit_Contracts.WorkItemExpand.All should be a string value or REST API should handle enum value.
         .then((sourceWorkItem: TFS_Wit_Contracts.WorkItem) => {
 
-            findNextIteration(sourceWorkItem).then(iterationPath => {
-                createWorkItem(sourceWorkItem, iterationPath).then((targetWorkItem) => {
+            return findNextIteration(sourceWorkItem).then(iterationPath => {
+                return createWorkItem(sourceWorkItem, iterationPath).then((targetWorkItem) => {
                     alert(targetWorkItem.id);
-                    updateLinkRelations(sourceWorkItem, targetWorkItem, childIdsToMove).then(() => {
-                        updateIterationPath(childIdsToMove, iterationPath).then(() => {
+                    return updateLinkRelations(sourceWorkItem, targetWorkItem, childIdsToMove).then(() => {
+                        return updateIterationPath(childIdsToMove, iterationPath).then(() => {
                             // all done!!
                         });
                     });
@@ -182,7 +181,6 @@ function split(id: number, childIdsToMove: number[]) {
             });
         });
 }
-
 
 
 var actionProvider = {
