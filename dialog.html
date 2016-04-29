@@ -1,0 +1,95 @@
+<!-----------------------------------------------------------------------
+ <copyright file="dialog.html">
+    This code is licensed under the MIT License.
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+    ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+    TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+    PARTICULAR PURPOSE AND NONINFRINGEMENT.
+</copyright>
+<summary>
+    Content of the dialog that gets shown when the user wants to create a new folder.
+</summary>
+----------------------------------------------------------------------->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Split work item</title>
+    <script src="scripts/VSS.SDK.min.js"></script>
+</head>
+<body>
+    <div class="dialog-header">
+        <div class="dialog-description">Split work item </div>
+        <h2 id="header">Register now</h2>
+        <p>
+            <label>Name:</label>
+            <input id="inpName" />
+        </p>
+        <p>
+            <label>Data of birth:</label>
+            <input id="inpDob" />
+        </p>
+        <p>
+            <label>Email address:</label>
+            <input id="inpEmail" />
+        </p>
+    </div>
+    
+    <script type="text/javascript">
+        VSS.init({
+            explicitNotifyLoaded: true,
+            usePlatformScripts: true,
+            usePlatformStyles: true
+        });
+         var registrationForm = (function() {
+                var callbacks = [];
+
+                function inputChanged() {
+                    // Execute registered callbacks
+                    for(var i = 0; i < callbacks.length; i++) {
+                        callbacks[i](isValid());
+                    }
+                }
+
+                function isValid() {
+                    // Check whether form is valid or not
+                    return !!(name.value) && !!(dateOfBirth.value) && !!(email.value);
+                }
+
+                function getFormData() {
+                    // Get form values
+                    return {
+                        name: name.value,
+                        dateOfBirth: dateOfBirth.value,
+                        email: email.value  
+                    };
+                }
+
+                var name = document.getElementById("inpName");
+                var dateOfBirth = document.getElementById("inpDob");
+                var email = document.getElementById("inpEmail");
+
+                name.addEventListener("change", inputChanged);
+                dateOfBirth.addEventListener("change", inputChanged);
+                email.addEventListener("change", inputChanged);
+
+                VSS.notifyLoadSucceeded();
+                return {
+                    isFormValid: function() {
+                        return isValid();   
+                    },
+                    getFormData: function() {
+                        return getFormData();
+                    },
+                    attachFormChanged: function(cb) {
+                         callbacks.push(cb);
+                    }
+                };
+                
+                
+            })();
+        // Register form object to be used accross this extension
+        
+        VSS.register("split-work-dialog", registrationForm);
+    </script>
+</body>
+</html>
