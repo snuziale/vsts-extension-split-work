@@ -5,6 +5,9 @@ import TFS_Wit_Contracts = require("TFS/WorkItemTracking/Contracts");
 import TFS_Wit_Client = require("TFS/WorkItemTracking/RestClient");
 import TFS_Wit_Services = require("TFS/WorkItemTracking/Services");
 
+import TFS_Work_Contracts = require("TFS/Work/Contracts");
+import TFS_Work_Client = require("TFS/Work/RestClient");
+
 var _fieldsToCopy = [
     "System.Title",
     "System.AssignedTo",
@@ -36,7 +39,8 @@ function removeLinks(workItem: TFS_Wit_Contracts.WorkItem, linkedWorkItemIds: nu
     var indices = [];
     workItem.relations.forEach((relation, index) => {
         linkedWorkItemIds.forEach(id => {
-            if (relation.url.indexOf("/" + id) > -1) {
+            var relationId = parseInt(relation.url.substr(relation.url.lastIndexOf("/") + 1), 10)
+            if (relationId === id) {
                 indices.unshift(index);
             }
         });
@@ -104,10 +108,26 @@ function updateLinkRelations(sourceWorkItem: TFS_Wit_Contracts.WorkItem, targetW
     });
 }
 
-function createWorkItem(workItem: TFS_Wit_Contracts.WorkItem): IPromise<TFS_Wit_Contracts.WorkItem> {
+function updateIterationPath(childIdsToMove: number[], iterationPath: string): IPromise<TFS_Wit_Contracts.WorkItem[]> {
+    var promises = [];
+    childIdsToMove.forEach(childId => {
+        var patchDocument = [];
+        patchDocument.push(createFieldPatchBlock("System.IterationPath", iterationPath));
+        promises.push(TFS_Wit_Client.getClient().updateWorkItem(patchDocument, childId));
+    });
+
+    return Q.allSettled(promises).then(promiseStates => promiseStates.map(state => state.value));
+}
+
+function createWorkItem(workItem: TFS_Wit_Contracts.WorkItem, iterationPath?: string): IPromise<TFS_Wit_Contracts.WorkItem> {
     var patchDocument = [];
     _fieldsToCopy.forEach(field => {
-        patchDocument.push(createFieldPatchBlock(field, workItem.fields[field]));
+        if (field === "System.IterationPath" && iterationPath) {
+            patchDocument.push(createFieldPatchBlock(field, iterationPath));
+        }
+        else {
+            patchDocument.push(createFieldPatchBlock(field, workItem.fields[field]));
+        }
     })
     // TODO: revisit
     var comment = `This item was <a href="http://bing.com" target="_blank">split</a> from #${workItem.id}: ${workItem.fields["System.Title"]}`;
@@ -117,19 +137,48 @@ function createWorkItem(workItem: TFS_Wit_Contracts.WorkItem): IPromise<TFS_Wit_
     return TFS_Wit_Client.getClient().createWorkItem(patchDocument, context.project.name, workItem.fields["System.WorkItemType"]);
 }
 
+function findNextIteration(sourceWorkItem: TFS_Wit_Contracts.WorkItem): IPromise<string> {
+    var currentIterationPath = sourceWorkItem.fields["System.IterationPath"];
+
+    var context = VSS.getWebContext();
+    var teamContext = {
+        project: context.project.name,
+        projectId: context.project.id,
+        team: context.team.name,
+        teamId: context.team.id
+    };
+
+    return TFS_Work_Client.getClient().getTeamIterations(teamContext).then((iterations: TFS_Work_Contracts.TeamSettingsIteration[]) => {
+        var index = 0;
+        for (var len = iterations.length; index < len; index++) {
+            var iteration = iterations[index];
+            if (currentIterationPath === iteration.path) {
+                break;
+            }
+        }
+        if (index >= iterations.length - 1) {
+            return currentIterationPath;
+        }
+        else {
+            return iterations[index + 1].path;
+        }
+    });
+}
+
 function split(id: number, childIdsToMove: number[]) {
 
     TFS_Wit_Client.getClient().getWorkItem(id, null, null, <any>"all" /*TFS_Wit_Contracts.WorkItemExpand.All*/)    // TODO: Bug - TFS_Wit_Contracts.WorkItemExpand.All should be a string value or REST API should handle enum value.
         .then((sourceWorkItem: TFS_Wit_Contracts.WorkItem) => {
-            createWorkItem(sourceWorkItem).then((targetWorkItem) => {
-                alert("!! CREATED !!" + targetWorkItem.id);
-                updateLinkRelations(sourceWorkItem, targetWorkItem, childIdsToMove).then(
-                    () => {
 
-                    },
-                    () => {
-                        // something went wrong.
+            findNextIteration(sourceWorkItem).then(iterationPath => {
+                createWorkItem(sourceWorkItem, iterationPath).then((targetWorkItem) => {
+                    alert(targetWorkItem.id);
+                    updateLinkRelations(sourceWorkItem, targetWorkItem, childIdsToMove).then(() => {
+                        updateIterationPath(childIdsToMove, iterationPath).then(() => {
+                            // all done!!
+                        });
                     });
+                });
             });
         });
 }
