@@ -3,14 +3,15 @@ var parseIds = (workItem) : number[] => {
     var ids = [];
     
     var children = workItem.relations;
-    
-    for(var i = 0; i < children.length; i++) {
-        var potentialChild = children[i];
-        if(potentialChild.rel === "System.LinkTypes.Hierarchy-Forward") {
-            var splits = potentialChild.url.split("/");
-            var id = splits[splits.length - 1];
-            
-            ids.push(parseInt(id, 10));
+    if(children) {
+        for(var i = 0; i < children.length; i++) {
+            var potentialChild = children[i];       
+            if(potentialChild.rel === "System.LinkTypes.Hierarchy-Forward") {
+                var splits = potentialChild.url.split("/");
+                var id = splits[splits.length - 1];
+                
+                ids.push(parseInt(id, 10));
+            }
         }
     }
     
@@ -46,14 +47,17 @@ export class SplitWorkDialog {
             // contribution info
             var extInfo = VSS.getExtensionContext();
             var dialogContributionId = extInfo.publisherId + "." + extInfo.extensionId + "." + "split-work-dialog";
-            
-
-            var dialogOkCallback = () => {
-                
+            var theDialog: IExternalDialog;
+            var mySplitDialog;
+            var dialogOkCallback = (): any => {
+                //    alert("ASDFASDFASDFASDF");
+                   var ids = mySplitDialog.getIDs().then((ids) => {
+                        // alert(ids);
+                        // todo: call this thing
+                        theDialog.close();
+                   });
+                  
             };
-            
-           
-            
             
             var dialogOptions = {
                 title: "Split",
@@ -61,18 +65,21 @@ export class SplitWorkDialog {
                 modal: true,
                 okText: "Split",
                 cancelText: "Cancel",
-                okCallback: dialogOkCallback,
-                // content: $taskGrid,
+                height: 400,
+                width: 500,
+                resizable: false,
+                // okCallback: dialogOkCallback,
+                getDialogResult: dialogOkCallback,
                 defaultButton: "ok",
                 urlReplacementObject: { id: workItemId }
             };
             // VSS.require(["VSS/Controls/Dialogs"], function (Dialogs) {
             //    Dialogs.show(Dialogs.ModalDialog, dialogOptions); 
             // });
-            dialogSvc.openDialog(dialogContributionId, dialogOptions).then((dialog) => {
+            dialogSvc.openDialog(dialogContributionId, dialogOptions).then((dialog: IExternalDialog) => {
                 // do something
-               
-               var parentId =(<any>dialog)._id;
+               theDialog = dialog;
+               var parentId =(<any>dialog)._options.urlReplacementObject.id;
                VSS.require(["VSS/Service", "TFS/WorkItemTracking/RestClient", "TFS/WorkItemTracking/Contracts"], function (VSS_Service, TFS_Wit_WebApi, WIT_Contracts) {
                         // Get the REST client
                         var witClient = VSS_Service.getCollectionClient(TFS_Wit_WebApi.WorkItemTrackingHttpClient);
@@ -83,11 +90,18 @@ export class SplitWorkDialog {
                                 var childIds = parseIds(workItem);
                                 
                                 witClient.getWorkItems(childIds).then((childWorkItems) => {
-                                    // new SplitWorkDialog().showDialog(childWorkItems);
                                     
+                                    var openChildWorkItems = [];
+                                    for(var i = 0; i < childWorkItems.length; i++) {
+                                        if(childWorkItems[i].fields["System.State"] !== "Closed") {
+                                            openChildWorkItems.push(childWorkItems[i])
+                                        }
+                                    }
                                     dialog.getContributionInstance("split-work-dialog").then(function (splitWorkDialog) {
-                                        (<any>splitWorkDialog).buildChildDivs(childWorkItems);
+                                        mySplitDialog = splitWorkDialog;
+                                        (<any>splitWorkDialog).buildChildDivs(openChildWorkItems);
                                     });
+                                    dialog.updateOkButton(true); 
                                 })
                             });
                     });

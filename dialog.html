@@ -15,11 +15,13 @@
 <head>
     <title>Split work item</title>
     <script src="scripts/VSS.SDK.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="css/coreStyles.css">
+
 </head>
 <body>
     <div class="dialog-header">
-        <div class="dialog-description">Split work item </div>
-        <h2 id="header">Register now</h2>
+        <div class="dialog-description">These unfinished tasks will be moved to your new work item, remove any you do not want to be moved.</div>
+        
         <div class="dialog-content"></div>
     </div>
     
@@ -31,7 +33,7 @@
         });
          var registrationForm = (function() {
                 var callbacks = [];
-
+                var currentChildWorkItems;
                 function inputChanged() {
                     // Execute registered callbacks
                     // for(var i = 0; i < callbacks.length; i++) {
@@ -43,12 +45,21 @@
                     // Check whether form is valid or not
                     // return !!(name.value) && !!(dateOfBirth.value) && !!(email.value);
                 }
+                
+                var parseChildWorkItems = (childWorkItems) => {
+                    var ids = [];
+                    for(var i = 0 ; i < childWorkItems.length; i++) {
+                        var childWorkItem = childWorkItems[i];
+                        ids.push(childWorkItem.id);
+                        
+                    }
+                    return ids;
+                }
 
                 function buildChildDivs(childWorkItems) {
                     // Get form values
-                 
+                    currentChildWorkItems = childWorkItems;
                     var $content = $(".dialog-content");
-                     $content.append("<label>These unfinished tasks will be moved to your new work item, remove any you do not want to be moved.</label>")
             
             
                     var $taskGrid = $("<div>").addClass("task-grid");
@@ -58,7 +69,10 @@
                         var child = childWorkItems[i];
                         
                         var title = child.fields["System.Title"];
-                        $taskGrid.append($("<div>").addClass("task-container").append("<label>" + title + "</label>"));
+                        var $taskContainer = $("<div>").addClass("task-container");
+                        $taskContainer.append($("<div>").addClass("color-bar"))
+                        $taskContainer.append("<label>" + title + "</label>")
+                        $taskGrid.append($taskContainer);
                     }
                     $content.append($taskGrid);
                 }
@@ -73,6 +87,9 @@
                     },
                     attachFormChanged: function(cb) {
                          callbacks.push(cb);
+                    },
+                    getIDs: function() {
+                        return parseChildWorkItems(currentChildWorkItems);
                     }
                 };
                 

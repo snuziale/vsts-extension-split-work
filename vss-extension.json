@@ -59,6 +59,10 @@
         {
             "path": "index.html",
             "addressable": true
+        }, 
+        {
+            "path": "css",
+            "addressable": true
         },
         {
             "path": "dialog.html",
