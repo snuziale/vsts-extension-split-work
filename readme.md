@@ -1,14 +1,16 @@
-## vsts-extension-split-work ##
+## Split! ##
 
 ### Structure ###
 
 ```
 /scripts            - Typescript code for extension
 /img                - Image assets for extension and description
+/css                - Style assets for extension
 /typings            - Typescript typings
 
 details.md          - Description to be shown in marketplace   
 index.html          - Main entry point
+dialog.html         - Dialog html
 vss-extension.json  - Extension manifest
 ```
 
