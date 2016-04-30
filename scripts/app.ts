@@ -223,7 +223,7 @@ function showSplitDialog(workItemId: number) {
             modal: true,
             okText: "Split",
             cancelText: "Cancel",
-            height: 400,
+            height: 300,
             width: 500,
             resizable: false,
             // okCallback: dialogOkCallback,
