@@ -32,6 +32,16 @@ function createRelationPatchBlock(index: string) {
     };
 }
 
+function createHtmlLink(link: string, text: number | string) {
+    return `<a href="${link}" target="_blank">${text}</a>`;
+}
+
+function createWorkItemHtmlLink(id: number) : string {
+    var context = VSS.getWebContext();
+    var link = `/tfs/_permalink/_workitems/edit/${id}?collectionId=${context.collection.id}&projectId=${context.project.id}`;
+    return createHtmlLink(link, id);
+}
+
 function removeLinks(workItem: TFS_Wit_Contracts.WorkItem, linkedWorkItemIds: number[], targetId: number): IPromise<TFS_Wit_Contracts.WorkItem> {
     if (!linkedWorkItemIds || linkedWorkItemIds.length === 0) {
         return Q(workItem);
@@ -48,8 +58,8 @@ function removeLinks(workItem: TFS_Wit_Contracts.WorkItem, linkedWorkItemIds: nu
     });
 
     var patchDocument = [];
-    // TODO: revisit
-    var comment = `The follow items were <a href="http://bing.com" target="_blank">split</a> to parent work item #${targetId}<br>${linkedWorkItemIds.join(", ")}`;
+    var childLinks = linkedWorkItemIds.map(id => createWorkItemHtmlLink(id)).join(", ");
+    var comment = `The follow items were ${createHtmlLink("http://aka.ms/split", "split")} to parent work item ${createWorkItemHtmlLink(targetId)}<br>${childLinks}`;
     patchDocument.push(createFieldPatchBlock("System.History", comment));
     indices.forEach(index => {
         patchDocument.push(createRelationPatchBlock(index));
@@ -128,8 +138,8 @@ function createWorkItem(workItem: TFS_Wit_Contracts.WorkItem, iterationPath?: st
             patchDocument.push(createFieldPatchBlock(field, workItem.fields[field]));
         }
     });
-    // TODO: revisit
-    var comment = `This item was <a href="http://bing.com" target="_blank">split</a> from #${workItem.id}: ${workItem.fields["System.Title"]}`;
+
+    var comment = `The follow items were ${createHtmlLink("http://aka.ms/split", "split")} to parent work item ${createWorkItemHtmlLink(workItem.id)}: ${workItem.fields["System.Title"]}`;
     patchDocument.push(createFieldPatchBlock("System.History", comment));
 
     var context = VSS.getWebContext();
@@ -165,39 +175,23 @@ function findNextIteration(sourceWorkItem: TFS_Wit_Contracts.WorkItem): IPromise
 }
 
 function split(id: number, childIdsToMove: number[]): IPromise<any> {
-
     return TFS_Wit_Client.getClient().getWorkItem(id, null, null, <any>"all" /*TFS_Wit_Contracts.WorkItemExpand.All*/)    // TODO: Bug - TFS_Wit_Contracts.WorkItemExpand.All should be a string value or REST API should handle enum value.
         .then((sourceWorkItem: TFS_Wit_Contracts.WorkItem) => {
-
             return findNextIteration(sourceWorkItem).then(iterationPath => {
                 return createWorkItem(sourceWorkItem, iterationPath).then((targetWorkItem) => {
                     return updateLinkRelations(sourceWorkItem, targetWorkItem, childIdsToMove).then(() => {
-                        return updateIterationPath(childIdsToMove, iterationPath).then(() => {
-                            // all done!!
-                        });
+                        return updateIterationPath(childIdsToMove, iterationPath);
                     });
                 });
             });
         });
 }
 
-function parseIds(workItem) {
-    var ids = [];
-
-    var children = workItem.relations;
-    if (children) {
-        for (var i = 0; i < children.length; i++) {
-            var potentialChild = children[i];
-            if (potentialChild.rel === "System.LinkTypes.Hierarchy-Forward") {
-                var splits = potentialChild.url.split("/");
-                var id = splits[splits.length - 1];
-
-                ids.push(parseInt(id, 10));
-            }
-        }
-    }
-
-    return ids;
+function getChildIds(workItem: TFS_Wit_Contracts.WorkItem) {
+    return workItem.relations.filter(relation => relation.rel === "System.LinkTypes.Hierarchy-Forward").map(relation => {
+        var url = relation.url;
+        return parseInt(url.substr(url.lastIndexOf("/") + 1), 10);
+    });
 }
 
 function showSplitDialog(workItemId: number) {
@@ -238,11 +232,8 @@ function showSplitDialog(workItemId: number) {
             var parentId = (<any>dialog)._options.urlReplacementObject.id;
 
             TFS_Wit_Client.getClient().getWorkItem(parentId, null, null, <any>"all").then(workItem => {
-                var childIds = parseIds(workItem);
+                var childIds = getChildIds(workItem);
 
-                var checkChildrenToSplit = () => {
-
-                };
                 if (childIds.length === 0) {
                     dialog.getContributionInstance("split-work-dialog").then(splitWorkDialog => {
                         mySplitDialog = splitWorkDialog;
