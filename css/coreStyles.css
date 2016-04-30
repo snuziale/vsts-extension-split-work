@@ -6,7 +6,7 @@
 
 .task-container {
     display: inline-block;
-    margin-bottom: 5px;
+    line-height: 1.5em;
     color: black;
     text-overflow: ellipsis;
     overflow: hidden;
@@ -40,7 +40,7 @@
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
-    width: 400px;
+    max-width: 400px;
 }
 
 .no-children {
@@ -60,8 +60,13 @@
     cursor: pointer;
 }
 
+.task-container:hover {
+    background-color: #D4E5F5;
+}
+
 .task-container:hover .delete-icon {
     background: url("../img/delete.png") no-repeat;
     background-size: contain;
+    background-color: #D4E5F5;
     cursor: pointer;
 }

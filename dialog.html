@@ -19,43 +19,28 @@
             usePlatformStyles: true
         });
          var registrationForm = (function() {
-                var currentChildWorkItems;
-
-                var parseChildWorkItems = (childWorkItems) => {
-                    var ids = [];
-                    for(var i = 0 ; i < childWorkItems.length; i++) {
-                        var childWorkItem = childWorkItems[i];
-                        ids.push(childWorkItem.id);
-                        
-                    }
-                    return ids;
-                }
+                var childIdToWorkItem = {};
 
                 function buildChildDivs(childWorkItems) {
-                    // Get form values
-                    currentChildWorkItems = childWorkItems;
                     var $content = $(".dialog-content");
+
                     $(".dialog-description").text("Below are the incomplete items for this work item.  Split to continue them in your next sprint.");
 
                     var $taskGrid = $("<div>").addClass("task-grid");
-
                     for(var i = 0; i < childWorkItems.length; i++) {
 
                         var child = childWorkItems[i];
-
+                        childIdToWorkItem[child.id] = child;
                         var title = child.fields["System.Title"];
-                        var $taskContainer = $("<div>").addClass("task-container").attr("id", i);
+                        var $taskContainer = $("<div>").addClass("task-container").attr("id", child.id);
                         $taskContainer.append($("<div>").addClass("color-bar"));
-                        $taskContainer.append("<label>" + title + "</label>");
+                        $taskContainer.append($("<div>").addClass("label-container").append("<label>" + title + "</label>"))
                         
-                        var $deleteIcon = $("<div>").addClass("delete-icon").attr("id", i);
-                        
+                        var $deleteIcon = $("<div>").addClass("delete-icon").attr("id", child.id);
                         $deleteIcon.on("click", (e) => {
-                            
-                            var myIndex = $(e.currentTarget).attr("id")
-                            
-                            $(".task-grid .task-container#" + myIndex).hide();
-                            currentChildWorkItems.splice(myIndex, 1);
+                            var removeId = $(e.currentTarget).attr("id")
+                            $(".task-grid .task-container#" + removeId).hide();
+                            delete childIdToWorkItem[removeId];
                         });
                         
                         $taskContainer.append($deleteIcon);
@@ -77,7 +62,14 @@
                         buildChildDivs(childWorkItems);
                     },
                     getIDs: function() {
-                        return parseChildWorkItems(currentChildWorkItems);
+                        var keys = Object.keys(childIdToWorkItem);
+                        var ids = [];
+                        var len = keys.length;
+                        for(var i = 0; i < len; i++) {
+                            var id = keys[i];
+                            ids.push(parseInt(id));
+                        }
+                        return ids;
                     },
                     setNoChildResults: setNoChildResults
                 };
