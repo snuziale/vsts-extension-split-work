@@ -47,7 +47,7 @@ function createHtmlLink(link: string, text: number | string) {
     return `<a href="${link}" target="_blank">${text}</a>`;
 }
 
-function createWorkItemHtmlLink(id: number) : string {
+function createWorkItemHtmlLink(id: number): string {
     var context = VSS.getWebContext();
     var link = `/tfs/_permalink/_workitems/edit/${id}?collectionId=${context.collection.id}&projectId=${context.project.id}`;
     return createHtmlLink(link, id);
@@ -61,7 +61,7 @@ function removeLinks(workItem: TFS_Wit_Contracts.WorkItem, linkedWorkItemIds: nu
     var indices = [];
     workItem.relations.forEach((relation, index) => {
         linkedWorkItemIds.forEach(id => {
-            var relationId = parseInt(relation.url.substr(relation.url.lastIndexOf("/") + 1), 10)
+            var relationId = parseInt(relation.url.substr(relation.url.lastIndexOf("/") + 1), 10);
             if (relationId === id) {
                 indices.unshift(index);
             }
@@ -157,13 +157,15 @@ function findNextIteration(sourceWorkItem: TFS_Wit_Contracts.WorkItem): IPromise
 
     return TFS_Work_Client.getClient().getTeamIterations(teamContext).then((iterations: TFS_Work_Contracts.TeamSettingsIteration[]) => {
         var index = 0;
+        var found = false;
         for (var len = iterations.length; index < len; index++) {
             var iteration = iterations[index];
             if (currentIterationPath === iteration.path) {
+                found = true;
                 break;
             }
         }
-        if (index >= iterations.length - 1) {
+        if (!found || index >= iterations.length - 1) {
             return currentIterationPath;
         }
         else {
@@ -249,7 +251,7 @@ function showSplitDialog(workItemId: number) {
                         var openChildWorkItems = [];
                         for (var i = 0; i < childWorkItems.length; i++) {
                             if (childWorkItems[i].fields[CoreFields.State] !== "Closed") { // TODO: does not work across all process templates (what about Cut state?)
-                                openChildWorkItems.push(childWorkItems[i])
+                                openChildWorkItems.push(childWorkItems[i]);
                             }
                         }
 
