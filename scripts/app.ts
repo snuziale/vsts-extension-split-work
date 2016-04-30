@@ -9,13 +9,16 @@ import TFS_Wit_Services = require("TFS/WorkItemTracking/Services");
 import TFS_Work_Contracts = require("TFS/Work/Contracts");
 import TFS_Work_Client = require("TFS/Work/RestClient");
 
-var _fieldsToCopy = [
-    "System.Title",
-    "System.AssignedTo",
-    "System.IterationPath",
-    "System.AreaPath",
-    "System.Description"
-];
+module CoreFields {
+    export var AreaPath = "System.AreaPath";
+    export var AssignedTo = "System.AssignedTo";
+    export var Description = "System.Description";
+    export var History = "System.History";
+    export var IterationPath = "System.IterationPath";
+    export var State = "System.State";
+    export var Title = "System.Title";
+    export var WorkItemType = "System.WorkItemType";
+}
 
 function createFieldPatchBlock(field: string, value: string): any {
     return {
@@ -25,10 +28,18 @@ function createFieldPatchBlock(field: string, value: string): any {
     };
 }
 
-function createRelationPatchBlock(index: string) {
+function createRemoveRelationPatchBlock(index: string) {
     return {
         "op": "remove",
         "path": "/relations/" + index
+    };
+}
+
+function createAddRelationPatchBlock(relation: TFS_Wit_Contracts.WorkItemRelation) {
+    return {
+        "op": "add",
+        "path": "/relations/-",
+        "value": relation
     };
 }
 
@@ -57,13 +68,11 @@ function removeLinks(workItem: TFS_Wit_Contracts.WorkItem, linkedWorkItemIds: nu
         });
     });
 
-    var patchDocument = [];
+    var patchDocument = indices.map(index => createRemoveRelationPatchBlock(index));
+
     var childLinks = linkedWorkItemIds.map(id => createWorkItemHtmlLink(id)).join(", ");
     var comment = `The follow items were ${createHtmlLink("http://aka.ms/split", "split")} to work item ${createWorkItemHtmlLink(targetId)}:<br>&nbsp;&nbsp;${childLinks}`;
-    patchDocument.push(createFieldPatchBlock("System.History", comment));
-    indices.forEach(index => {
-        patchDocument.push(createRelationPatchBlock(index));
-    });
+    patchDocument.push(createFieldPatchBlock(CoreFields.History, comment));
 
     return TFS_Wit_Client.getClient().updateWorkItem(patchDocument, workItem.id);
 }
@@ -73,15 +82,7 @@ function addRelations(workItem: TFS_Wit_Contracts.WorkItem, relations: TFS_Wit_C
         return Q(workItem);
     }
 
-    var patchDocument = [];
-    relations.forEach(relation => {
-        patchDocument.push({
-            "op": "add",
-            "path": "/relations/-",
-            "value": relation
-        });
-    });
-
+    var patchDocument = relations.map(relation => createAddRelationPatchBlock(relation));
     return TFS_Wit_Client.getClient().updateWorkItem(patchDocument, workItem.id);
 }
 
@@ -111,17 +112,14 @@ function updateLinkRelations(sourceWorkItem: TFS_Wit_Contracts.WorkItem, targetW
 
     return removeLinks(sourceWorkItem, childIdsToMove, targetWorkItem.id).then(() => {
         var relationsToAdd = parentRelation.concat(childRelations).concat(attachmentRelations);
-        return addRelations(targetWorkItem, relationsToAdd).then(() => {
-
-        });
+        return addRelations(targetWorkItem, relationsToAdd);
     });
 }
 
 function updateIterationPath(childIdsToMove: number[], iterationPath: string): IPromise<TFS_Wit_Contracts.WorkItem[]> {
     var promises = [];
     childIdsToMove.forEach(childId => {
-        var patchDocument = [];
-        patchDocument.push(createFieldPatchBlock("System.IterationPath", iterationPath));
+        var patchDocument = [createFieldPatchBlock(CoreFields.IterationPath, iterationPath)];
         promises.push(TFS_Wit_Client.getClient().updateWorkItem(patchDocument, childId));
     });
 
@@ -130,23 +128,24 @@ function updateIterationPath(childIdsToMove: number[], iterationPath: string): I
 
 function createWorkItem(workItem: TFS_Wit_Contracts.WorkItem, iterationPath?: string): IPromise<TFS_Wit_Contracts.WorkItem> {
     var patchDocument = [];
-    _fieldsToCopy.forEach(field => {
-        if (field === "System.IterationPath" && iterationPath) {
+    var fieldsToCopy = [CoreFields.Title, CoreFields.AssignedTo, CoreFields.IterationPath, CoreFields.AreaPath, CoreFields.Description];
+    fieldsToCopy.forEach(field => {
+        if (field === CoreFields.IterationPath && iterationPath) {
             patchDocument.push(createFieldPatchBlock(field, iterationPath));
         }
         else {
             patchDocument.push(createFieldPatchBlock(field, workItem.fields[field]));
         }
     });
-    var comment = `This work item was ${createHtmlLink("http://aka.ms/split", "split")} from work item ${createWorkItemHtmlLink(workItem.id)}: ${workItem.fields["System.Title"]}`;
-    patchDocument.push(createFieldPatchBlock("System.History", comment));
+    var comment = `This work item was ${createHtmlLink("http://aka.ms/split", "split")} from work item ${createWorkItemHtmlLink(workItem.id)}: ${workItem.fields[CoreFields.Title]}`;
+    patchDocument.push(createFieldPatchBlock(CoreFields.History, comment));
 
     var context = VSS.getWebContext();
-    return TFS_Wit_Client.getClient().createWorkItem(patchDocument, context.project.name, workItem.fields["System.WorkItemType"]);
+    return TFS_Wit_Client.getClient().createWorkItem(patchDocument, context.project.name, workItem.fields[CoreFields.WorkItemType]);
 }
 
 function findNextIteration(sourceWorkItem: TFS_Wit_Contracts.WorkItem): IPromise<string> {
-    var currentIterationPath = sourceWorkItem.fields["System.IterationPath"];
+    var currentIterationPath = sourceWorkItem.fields[CoreFields.IterationPath];
 
     var context = VSS.getWebContext();
     var teamContext = {
@@ -188,7 +187,7 @@ function split(id: number, childIdsToMove: number[]): IPromise<TFS_Wit_Contracts
         });
 }
 
-function getChildIds(workItem: TFS_Wit_Contracts.WorkItem) {
+function getChildIds(workItem: TFS_Wit_Contracts.WorkItem): number[] {
     return workItem.relations.filter(relation => relation.rel === "System.LinkTypes.Hierarchy-Forward").map(relation => {
         var url = relation.url;
         return parseInt(url.substr(url.lastIndexOf("/") + 1), 10);
@@ -249,7 +248,7 @@ function showSplitDialog(workItemId: number) {
 
                         var openChildWorkItems = [];
                         for (var i = 0; i < childWorkItems.length; i++) {
-                            if (childWorkItems[i].fields["System.State"] !== "Closed") { // TODO: does not work across all process templates (what about Cut state?)
+                            if (childWorkItems[i].fields[CoreFields.State] !== "Closed") { // TODO: does not work across all process templates (what about Cut state?)
                                 openChildWorkItems.push(childWorkItems[i])
                             }
                         }
