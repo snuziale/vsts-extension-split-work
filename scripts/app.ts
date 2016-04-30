@@ -59,7 +59,7 @@ function removeLinks(workItem: TFS_Wit_Contracts.WorkItem, linkedWorkItemIds: nu
 
     var patchDocument = [];
     var childLinks = linkedWorkItemIds.map(id => createWorkItemHtmlLink(id)).join(", ");
-    var comment = `The follow items were ${createHtmlLink("http://aka.ms/split", "split")} to parent work item ${createWorkItemHtmlLink(targetId)}<br>${childLinks}`;
+    var comment = `The follow items were ${createHtmlLink("http://aka.ms/split", "split")} to work item ${createWorkItemHtmlLink(targetId)}:<br>&nbsp;&nbsp;${childLinks}`;
     patchDocument.push(createFieldPatchBlock("System.History", comment));
     indices.forEach(index => {
         patchDocument.push(createRelationPatchBlock(index));
@@ -138,8 +138,7 @@ function createWorkItem(workItem: TFS_Wit_Contracts.WorkItem, iterationPath?: st
             patchDocument.push(createFieldPatchBlock(field, workItem.fields[field]));
         }
     });
-
-    var comment = `The follow items were ${createHtmlLink("http://aka.ms/split", "split")} to parent work item ${createWorkItemHtmlLink(workItem.id)}: ${workItem.fields["System.Title"]}`;
+    var comment = `This work item was ${createHtmlLink("http://aka.ms/split", "split")} from work item ${createWorkItemHtmlLink(workItem.id)}: ${workItem.fields["System.Title"]}`;
     patchDocument.push(createFieldPatchBlock("System.History", comment));
 
     var context = VSS.getWebContext();
@@ -174,13 +173,15 @@ function findNextIteration(sourceWorkItem: TFS_Wit_Contracts.WorkItem): IPromise
     });
 }
 
-function split(id: number, childIdsToMove: number[]): IPromise<any> {
+function split(id: number, childIdsToMove: number[]): IPromise<TFS_Wit_Contracts.WorkItem> {
     return TFS_Wit_Client.getClient().getWorkItem(id, null, null, <any>"all" /*TFS_Wit_Contracts.WorkItemExpand.All*/)    // TODO: Bug - TFS_Wit_Contracts.WorkItemExpand.All should be a string value or REST API should handle enum value.
         .then((sourceWorkItem: TFS_Wit_Contracts.WorkItem) => {
             return findNextIteration(sourceWorkItem).then(iterationPath => {
                 return createWorkItem(sourceWorkItem, iterationPath).then((targetWorkItem) => {
                     return updateLinkRelations(sourceWorkItem, targetWorkItem, childIdsToMove).then(() => {
-                        return updateIterationPath(childIdsToMove, iterationPath);
+                        return updateIterationPath(childIdsToMove, iterationPath).then(() => {
+                            return targetWorkItem;
+                        });
                     });
                 });
             });
@@ -204,9 +205,12 @@ function showSplitDialog(workItemId: number) {
 
         var dialogOkCallback = (): any => {
             var ids = mySplitDialog.getIDs().then((ids) => {
-                split(workItemId, ids).then(() => {
+                split(workItemId, ids).then((splitWorkItem: TFS_Wit_Contracts.WorkItem) => {
                     // TODO: show that we are saving....
                     theDialog.close();
+                    VSS.getService(TFS_Wit_Services.WorkItemFormNavigationService.contributionId).then((service: any) => {
+                        service.openWorkItem(splitWorkItem.id);
+                    });
                 });
             });
         };
