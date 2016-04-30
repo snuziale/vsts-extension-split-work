@@ -3,6 +3,7 @@
 <head>
     <title>Split work item</title>
     <script src="scripts/VSS.SDK.min.js"></script>
+    <script src="http://ajax.aspnetcdn.com/ajax/jquery/jquery-1.9.0.js"></script>
     <link rel="stylesheet" type="text/css" href="css/coreStyles.css">
 </head>
 <body>
@@ -43,9 +44,22 @@
                         var child = childWorkItems[i];
 
                         var title = child.fields["System.Title"];
-                        var $taskContainer = $("<div>").addClass("task-container");
+                        var $taskContainer = $("<div>").addClass("task-container").attr("id", i);
                         $taskContainer.append($("<div>").addClass("color-bar"));
                         $taskContainer.append("<label>" + title + "</label>");
+                        
+                        var $deleteIcon = $("<div>").addClass("delete-icon").attr("id", i);
+                        
+                        $deleteIcon.on("click", (e) => {
+                            
+                            var myIndex = $(e.currentTarget).attr("id")
+                            
+                            $(".task-grid .task-container#" + myIndex).hide();
+                            currentChildWorkItems.splice(myIndex, 1);
+                        });
+                        
+                        $taskContainer.append($deleteIcon);
+                        
                         $taskGrid.append($taskContainer);
                     }
                     $content.append($taskGrid);
