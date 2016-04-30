@@ -280,7 +280,7 @@ var actionProvider = {
     getMenuItems: (context) => {
         return [<IContributedMenuItem>{
             title: "Split",
-            icon: "img/logo.png",
+            icon: "img/icon.png",
             action: (actionContext) => {
                 let workItemId = actionContext.id
                     || (actionContext.ids && actionContext.ids.length > 0 && actionContext.ids[0])
