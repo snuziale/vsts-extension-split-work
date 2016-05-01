@@ -20,6 +20,15 @@ module CoreFields {
     export var WorkItemType = "System.WorkItemType";
 }
 
+module WorkItemState {
+    export var Closed = "Closed";
+    export var Removed = "Removed";
+    export var Cut = "Cut";
+    export var Done = "Done";
+}
+
+var ExcludedWorkItemStates = [WorkItemState.Closed, WorkItemState.Cut, WorkItemState.Done, WorkItemState.Removed];
+
 function createFieldPatchBlock(field: string, value: string): any {
     return {
         "op": "add",
@@ -190,7 +199,7 @@ function split(id: number, childIdsToMove: number[]): IPromise<TFS_Wit_Contracts
 }
 
 function getChildIds(workItem: TFS_Wit_Contracts.WorkItem): number[] {
-    return workItem.relations.filter(relation => relation.rel === "System.LinkTypes.Hierarchy-Forward").map(relation => {
+    return !workItem.relations? [] : workItem.relations.filter(relation => relation.rel === "System.LinkTypes.Hierarchy-Forward").map(relation => {
         var url = relation.url;
         return parseInt(url.substr(url.lastIndexOf("/") + 1), 10);
     });
@@ -225,7 +234,6 @@ function showSplitDialog(workItemId: number) {
             height: 300,
             width: 500,
             resizable: false,
-            // okCallback: dialogOkCallback,
             getDialogResult: dialogOkCallback,
             defaultButton: "ok",
             urlReplacementObject: { id: workItemId }
@@ -250,7 +258,8 @@ function showSplitDialog(workItemId: number) {
 
                         var openChildWorkItems = [];
                         for (var i = 0; i < childWorkItems.length; i++) {
-                            if (childWorkItems[i].fields[CoreFields.State] !== "Closed") { // TODO: does not work across all process templates (what about Cut state?)
+                            var state = childWorkItems[i].fields[CoreFields.State];
+                            if (ExcludedWorkItemStates.indexOf(state) === -1) { // TODO: does not work across all process templates (what about Cut state?)
                                 openChildWorkItems.push(childWorkItems[i]);
                             }
                         }
