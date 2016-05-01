@@ -46,6 +46,7 @@
 .no-children {
     height: 200px;
     background: url("../img/no-children.png") no-repeat center;
+    margin-top: -20px;
 }
 
 .delete-icon {
