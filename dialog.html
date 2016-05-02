@@ -18,7 +18,7 @@
             usePlatformScripts: true,
             usePlatformStyles: true
         });
-         var registrationForm = (function() {
+         var splitWorkDialog = (function() {
                 var childIdToWorkItem = {};
 
                 function buildChildDivs(childWorkItems) {
@@ -28,7 +28,6 @@
 
                     var $taskGrid = $("<div>").addClass("task-grid");
                     for(var i = 0; i < childWorkItems.length; i++) {
-
                         var child = childWorkItems[i];
                         childIdToWorkItem[child.id] = child;
                         var title = child.fields["System.Title"];
@@ -53,7 +52,7 @@
                 function setNoChildResults() {
                     var $content = $(".dialog-content");
                     $content.addClass("no-children");
-                    $(".dialog-description").text("These are no children to be split from this work item.");
+                    $(".dialog-description").text("There are no children to be split from this work item.");
                 }
 
                 VSS.notifyLoadSucceeded();
@@ -76,7 +75,7 @@
             })();
 
         // Register form object to be used accross this extension
-        VSS.register("split-work-dialog", registrationForm);
+        VSS.register("split-work-dialog", splitWorkDialog);
     </script>
 </body>
 </html>
