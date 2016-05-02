@@ -25,13 +25,13 @@
     },
     "links": {
         "support": {
-            "uri": "https://bit.ly"
+            "uri": "https://github.com/snuziale/vsts-extension-split-work"
         },
         "repository": {
-            "uri": "https://bit.ly"
+            "uri": "https://github.com/snuziale/vsts-extension-split-work"
         },
         "issues": {
-            "uri": "https://bit.ly"
+            "uri": "https://github.com/snuziale/vsts-extension-split-work/issues"
         }
     },
     "branding": {
