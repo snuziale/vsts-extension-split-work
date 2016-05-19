@@ -9,25 +9,7 @@ import TFS_Wit_Services = require("TFS/WorkItemTracking/Services");
 import TFS_Work_Contracts = require("TFS/Work/Contracts");
 import TFS_Work_Client = require("TFS/Work/RestClient");
 
-module CoreFields {
-    export var AreaPath = "System.AreaPath";
-    export var AssignedTo = "System.AssignedTo";
-    export var Description = "System.Description";
-    export var History = "System.History";
-    export var IterationPath = "System.IterationPath";
-    export var State = "System.State";
-    export var Title = "System.Title";
-    export var WorkItemType = "System.WorkItemType";
-}
-
-module WorkItemState {
-    export var Closed = "Closed";
-    export var Removed = "Removed";
-    export var Cut = "Cut";
-    export var Done = "Done";
-}
-
-var ExcludedWorkItemStates = [WorkItemState.Closed, WorkItemState.Cut, WorkItemState.Done, WorkItemState.Removed];
+import {CoreFields} from "scripts/constants";
 
 function createFieldPatchBlock(field: string, value: string): any {
     return {
@@ -135,11 +117,14 @@ function updateIterationPath(childIdsToMove: number[], iterationPath: string): I
     return Q.allSettled(promises).then(promiseStates => promiseStates.map(state => state.value));
 }
 
-function createWorkItem(workItem: TFS_Wit_Contracts.WorkItem, iterationPath?: string): IPromise<TFS_Wit_Contracts.WorkItem> {
+function createWorkItem(workItem: TFS_Wit_Contracts.WorkItem, title?: string, iterationPath?: string): IPromise<TFS_Wit_Contracts.WorkItem> {
     var patchDocument = [];
     var fieldsToCopy = [CoreFields.Title, CoreFields.AssignedTo, CoreFields.IterationPath, CoreFields.AreaPath, CoreFields.Description];
     fieldsToCopy.forEach(field => {
-        if (field === CoreFields.IterationPath && iterationPath) {
+        if (field === CoreFields.Title && title && title.length > 0) {
+            patchDocument.push(createFieldPatchBlock(field, title));
+        }
+        else if (field === CoreFields.IterationPath && iterationPath) {
             patchDocument.push(createFieldPatchBlock(field, iterationPath));
         }
         else {
@@ -183,11 +168,11 @@ function findNextIteration(sourceWorkItem: TFS_Wit_Contracts.WorkItem): IPromise
     });
 }
 
-function split(id: number, childIdsToMove: number[]): IPromise<TFS_Wit_Contracts.WorkItem> {
+function peformSplit(id: number, childIdsToMove: number[], title?: string): IPromise<TFS_Wit_Contracts.WorkItem> {
     return TFS_Wit_Client.getClient().getWorkItem(id, null, null, <any>"all" /*TFS_Wit_Contracts.WorkItemExpand.All*/)    // TODO: Bug - TFS_Wit_Contracts.WorkItemExpand.All should be a string value or REST API should handle enum value.
         .then((sourceWorkItem: TFS_Wit_Contracts.WorkItem) => {
             return findNextIteration(sourceWorkItem).then(iterationPath => {
-                return createWorkItem(sourceWorkItem, iterationPath).then((targetWorkItem) => {
+                return createWorkItem(sourceWorkItem, title, iterationPath).then((targetWorkItem) => {
                     return updateLinkRelations(sourceWorkItem, targetWorkItem, childIdsToMove).then(() => {
                         return updateIterationPath(childIdsToMove, iterationPath).then(() => {
                             return targetWorkItem;
@@ -199,83 +184,52 @@ function split(id: number, childIdsToMove: number[]): IPromise<TFS_Wit_Contracts
 }
 
 function getChildIds(workItem: TFS_Wit_Contracts.WorkItem): number[] {
-    return !workItem.relations? [] : workItem.relations.filter(relation => relation.rel === "System.LinkTypes.Hierarchy-Forward").map(relation => {
+    return !workItem.relations ? [] : workItem.relations.filter(relation => relation.rel === "System.LinkTypes.Hierarchy-Forward").map(relation => {
         var url = relation.url;
         return parseInt(url.substr(url.lastIndexOf("/") + 1), 10);
     });
 }
 
-function showSplitDialog(workItemId: number) {
-    VSS.getService(VSS.ServiceIds.Dialog).then((dialogSvc: IHostDialogService) => {
-        // contribution info
-        var extInfo = VSS.getExtensionContext();
-        var dialogContributionId = extInfo.publisherId + "." + extInfo.extensionId + "." + "split-work-dialog";
-        var theDialog: IExternalDialog;
-        var mySplitDialog: any; // TODO: interface this
+function showDialog(workItemId: number) {
+    var _dialog: IExternalDialog;
+    var _contribution: any;
 
-        var dialogOkCallback = (): any => {
-            var ids = mySplitDialog.getIDs().then((ids) => {
-                split(workItemId, ids).then((splitWorkItem: TFS_Wit_Contracts.WorkItem) => {
-                    // TODO: show that we are saving....
-                    theDialog.close();
-                    VSS.getService(TFS_Wit_Services.WorkItemFormNavigationService.contributionId).then((service: any) => {
-                        service.openWorkItem(splitWorkItem.id);
-                    });
-                });
-            });
-        };
+    var dialogOptions = <IHostDialogOptions>{
+        title: "Split work item",
+        draggable: true,
+        modal: true,
+        okText: "Split",
+        cancelText: "Cancel",
+        height: 400,
+        width: 500,
+        resizable: false,
+        getDialogResult: () => {
+            _contribution.getDetails().then((details: { ids: number[], title: string, shouldOpenNewWorkItem: boolean }) => {
+                if (details.ids && details.ids.length > 0) {
+                    peformSplit(workItemId, details.ids, details.title).then((splitWorkItem: TFS_Wit_Contracts.WorkItem) => {
+                        _dialog.close();
 
-        var dialogOptions = {
-            title: "Split work item",
-            draggable: true,
-            modal: true,
-            okText: "Split",
-            cancelText: "Cancel",
-            height: 300,
-            width: 500,
-            resizable: false,
-            getDialogResult: dialogOkCallback,
-            defaultButton: "ok",
-            urlReplacementObject: { id: workItemId }
-        };
-
-        dialogSvc.openDialog(dialogContributionId, dialogOptions).then((dialog: IExternalDialog) => {
-
-            theDialog = dialog;
-            var parentId = (<any>dialog)._options.urlReplacementObject.id;
-
-            TFS_Wit_Client.getClient().getWorkItem(parentId, null, null, <any>"all").then(workItem => {
-                var childIds = getChildIds(workItem);
-
-                if (childIds.length === 0) {
-                    dialog.getContributionInstance("split-work-dialog").then(splitWorkDialog => {
-                        mySplitDialog = splitWorkDialog;
-                        mySplitDialog.setNoChildResults();
-                    });
-                }
-                else {
-                    TFS_Wit_Client.getClient().getWorkItems(childIds).then(childWorkItems => {
-
-                        var openChildWorkItems = [];
-                        for (var i = 0; i < childWorkItems.length; i++) {
-                            var state = childWorkItems[i].fields[CoreFields.State];
-                            if (ExcludedWorkItemStates.indexOf(state) === -1) { // TODO: does not work across all process templates (what about Cut state?)
-                                openChildWorkItems.push(childWorkItems[i]);
-                            }
+                        if (details.shouldOpenNewWorkItem) {
+                            VSS.getService(TFS_Wit_Services.WorkItemFormNavigationService.contributionId).then((service: any) => {
+                                service.openWorkItem(splitWorkItem.id);
+                            });
                         }
-
-                        dialog.getContributionInstance("split-work-dialog").then(splitWorkDialog => {
-                            mySplitDialog = splitWorkDialog;
-                            if (openChildWorkItems.length > 0) {
-                                mySplitDialog.buildChildDivs(openChildWorkItems);
-                                dialog.updateOkButton(true);
-                            }
-                            else {
-                                mySplitDialog.setNoChildResults();
-                            }
-                        });
                     });
                 }
+            });
+        }
+    };
+
+    VSS.getService(VSS.ServiceIds.Dialog).then((dialogSvc: IHostDialogService) => {
+        dialogSvc.openDialog("blueprint-team.vsts-extension-split-work.vsts-extension-split-work-dialog", dialogOptions).then((dialog: IExternalDialog) => {
+            _dialog = dialog;
+            dialog.getContributionInstance("vsts-extension-split-work-dialog").then((contribution: any) => {
+                _contribution = contribution;
+                contribution.startSplit(workItemId).then(enable => {
+                    if (enable) {
+                        dialog.updateOkButton(true);
+                    }
+                });
             });
         });
     });
@@ -292,7 +246,7 @@ var actionProvider = {
                     || (actionContext.workItemIds && actionContext.workItemIds.length > 0 && actionContext.workItemIds[0]);
 
                 if (workItemId) {
-                    showSplitDialog(workItemId);
+                    showDialog(workItemId);
                 }
             }
         }];

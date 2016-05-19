@@ -1,73 +1,52 @@
-
-.dialog-description { 
-    font-size: 1.2em;
-    margin-bottom: 20px;
-}
-
-.task-container {
-    display: inline-block;
-    line-height: 1.5em;
-    color: black;
-    text-overflow: ellipsis;
-    overflow: hidden;
-    white-space: nowrap;
-    width: 100%;
-}
-
-.task-grid {
-    border: 2px solid lightgrey;
-    overflow-x: hidden;
-    height: 130px;
-    overflow-y: auto;
-}
-
-.color-bar {
-    background-color: #F2CB1D;
-    height: 16px;
-    width: 6px;
-    display: inline-block;
-    margin-left: 5px;
-    margin-right: 5px;
-}
-
-.task-grid label {
-    font-size: 1.2em;
-    color: black;
-}
-
-.label-container {
-    display: inline-block;
-    text-overflow: ellipsis;
-    overflow: hidden;
-    white-space: nowrap;
-    max-width: 400px;
-}
-
 .no-children {
-    height: 200px;
+    height: 300px;
     background: url("../img/no-children.png") no-repeat center;
-    margin-top: -20px;
 }
 
-.delete-icon {
-    width: 12px;
-    height: 12px;
-    float: right;
-    margin-right: 10px;
-    background-size: contain;
-    margin-left: 5px;
-    background-image: none;
-    margin-top: 5px;
-    cursor: pointer;
+li {
+  list-style-type: none;
 }
 
-.task-container:hover {
-    background-color: #D4E5F5;
+li:hover {
+  background-color: #D4E5F5;
 }
 
-.task-container:hover .delete-icon {
-    background: url("../img/delete.png") no-repeat;
-    background-size: contain;
-    background-color: #D4E5F5;
-    cursor: pointer;
+.list {
+  height: 100px;
+  overflow: auto;
+  padding: 0 8px;
+  border: 1px solid #DEDEDE;
+}
+
+.item-color {
+  background-color: #DEDEDE;
+  height: 16px;
+  width: 6px;
+  display: inline-block;
+  margin-left: 5px;
+  margin-right: 5px;
+}
+
+.item-text {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  width: calc(100% - 50px);
+  display: inline-block;
+}
+
+.item-action {
+  float: right;
+  cursor: pointer;
+  display: none;
+  background: url("../img/delete.png") no-repeat;
+  background-size: contain;
+  width: 10px;
+  height: 10px;
+  margin-right: 8px;
+  margin-top: 8px;
+}
+
+li:hover .item-action {
+  display: inline; 
 }

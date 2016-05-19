@@ -3,7 +3,10 @@
     "id": "vsts-extension-split-work",
     "version": "0.1.0",
     "name": "Split!",
-    "scopes": [ "vso.work", "vso.work_write" ],
+    "scopes": [
+        "vso.work",
+        "vso.work_write"
+    ],
     "description": "Split a work item to track work that will continue into the next sprint.",
     "publisher": "blueprint-team",
     "public": false,
@@ -16,7 +19,11 @@
         }
     ],
     "tags": [
-        "Split", "Agile", "Sprint", "Iteration", "Scrum"
+        "Split",
+        "Agile",
+        "Sprint",
+        "Iteration",
+        "Scrum"
     ],
     "content": {
         "details": {
@@ -50,7 +57,7 @@
         {
             "path": "index.html",
             "addressable": true
-        }, 
+        },
         {
             "path": "css",
             "addressable": true
@@ -76,8 +83,8 @@
                 "uri": "index.html"
             }
         },
-         {
-            "id": "split-work-dialog",
+        {
+            "id": "vsts-extension-split-work-dialog",
             "type": "ms.vss-web.control",
             "targets": [],
             "properties": {

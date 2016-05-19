@@ -3,14 +3,10 @@
 <head>
     <title>Split work item</title>
     <script src="scripts/VSS.SDK.min.js"></script>
-    <script src="http://ajax.aspnetcdn.com/ajax/jquery/jquery-1.9.0.js"></script>
     <link rel="stylesheet" type="text/css" href="css/coreStyles.css">
 </head>
 <body>
-    <div class="dialog-header">
-        <div class="dialog-description"></div>
-        <div class="dialog-content"></div>
-    </div>
+    <div id="main" class="bowtie"></div>
     
     <script type="text/javascript">
         VSS.init({
@@ -18,64 +14,11 @@
             usePlatformScripts: true,
             usePlatformStyles: true
         });
-         var splitWorkDialog = (function() {
-                var childIdToWorkItem = {};
 
-                function buildChildDivs(childWorkItems) {
-                    var $content = $(".dialog-content");
-
-                    $(".dialog-description").text("Below are the incomplete items for this work item.  Split to continue them in your next sprint.");
-
-                    var $taskGrid = $("<div>").addClass("task-grid");
-                    for(var i = 0; i < childWorkItems.length; i++) {
-                        var child = childWorkItems[i];
-                        childIdToWorkItem[child.id] = child;
-                        var title = child.fields["System.Title"];
-                        var $taskContainer = $("<div>").addClass("task-container").attr("id", child.id);
-                        $taskContainer.append($("<div>").addClass("color-bar"));
-                        $taskContainer.append($("<div>").addClass("label-container").append("<label>" + title + "</label>"))
-                        
-                        var $deleteIcon = $("<div>").addClass("delete-icon").attr("id", child.id);
-                        $deleteIcon.on("click", (e) => {
-                            var removeId = $(e.currentTarget).attr("id")
-                            $(".task-grid .task-container#" + removeId).hide();
-                            delete childIdToWorkItem[removeId];
-                        });
-                        
-                        $taskContainer.append($deleteIcon);
-                        
-                        $taskGrid.append($taskContainer);
-                    }
-                    $content.append($taskGrid);
-                }
-
-                function setNoChildResults() {
-                    var $content = $(".dialog-content");
-                    $content.addClass("no-children");
-                    $(".dialog-description").text("There are no children to be split from this work item.");
-                }
-
-                VSS.notifyLoadSucceeded();
-                return {
-                    buildChildDivs: function(childWorkItems) {
-                        buildChildDivs(childWorkItems);
-                    },
-                    getIDs: function() {
-                        var keys = Object.keys(childIdToWorkItem);
-                        var ids = [];
-                        var len = keys.length;
-                        for(var i = 0; i < len; i++) {
-                            var id = keys[i];
-                            ids.push(parseInt(id));
-                        }
-                        return ids;
-                    },
-                    setNoChildResults: setNoChildResults
-                };
-            })();
-
-        // Register form object to be used accross this extension
-        VSS.register("split-work-dialog", splitWorkDialog);
+        VSS.require(["scripts/dialog"], function () {
+            // Loading succeeded
+            VSS.notifyLoadSucceeded();
+        });
     </script>
 </body>
 </html>
