@@ -221,7 +221,7 @@ function showDialog(workItemId: number) {
     };
 
     VSS.getService(VSS.ServiceIds.Dialog).then((dialogSvc: IHostDialogService) => {
-        dialogSvc.openDialog("blueprint-team.vsts-extension-split-work.vsts-extension-split-work-dialog", dialogOptions).then((dialog: IExternalDialog) => {
+        dialogSvc.openDialog("blueprint.vsts-extension-split-work.vsts-extension-split-work-dialog", dialogOptions).then((dialog: IExternalDialog) => {
             _dialog = dialog;
             dialog.getContributionInstance("vsts-extension-split-work-dialog").then((contribution: any) => {
                 _contribution = contribution;
@@ -255,5 +255,5 @@ var actionProvider = {
 
 
 // Register context menu action provider
-VSS.register("blueprint-team.vsts-extension-split-work.vsts-extension-split-work-action", actionProvider);
+VSS.register("blueprint.vsts-extension-split-work.vsts-extension-split-work-action", actionProvider);
 VSS.register("vsts-extension-split-work-action", actionProvider);

@@ -209,5 +209,5 @@ var dialog = {
     }
 };
 
-VSS.register("blueprint-team.vsts-extension-split-work.vsts-extension-split-work-dialog", dialog);
+VSS.register("blueprint.vsts-extension-split-work.vsts-extension-split-work-dialog", dialog);
 VSS.register("vsts-extension-split-work-dialog", dialog);
