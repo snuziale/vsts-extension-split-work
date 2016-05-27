@@ -13,8 +13,8 @@ Use the context menu of a work item from the board or backlog to **Split** a wor
 
 ![Invoke Split from work item context menu](/img/split-contextmenu.png "Context Menu")
 
-The dialog automatically populates with the remaining incomplete items.<br/>
-Update/keep the title, review and remove any items that no longer meet the requirements, and click **Split**.<br/>
+The dialog automatically populates with the remaining incomplete items.
+Update/keep the title, review and remove any items that no longer meet the requirements, and click **Split**.
 
 ![Select the remaining work items tobe split](/img/split-dialog.png "Dialog")
 
