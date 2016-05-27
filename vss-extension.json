@@ -9,7 +9,7 @@
     ],
     "description": "Split a work item to track work that will continue into the next sprint.",
     "publisher": "blueprint",
-    "public": false,
+    "public": true,
     "icons": {
         "default": "img/logo.png"
     },
