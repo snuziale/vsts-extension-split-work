@@ -238,10 +238,12 @@ function showDialog(workItemId: number) {
 var actionProvider = {
     getMenuItems: (context) => {
         return [<IContributedMenuItem>{
+            text: "Split",
             title: "Split",
             icon: "img/icon.png",
             action: (actionContext) => {
                 let workItemId = actionContext.id
+                    || actionContext.workItemId
                     || (actionContext.ids && actionContext.ids.length > 0 && actionContext.ids[0])
                     || (actionContext.workItemIds && actionContext.workItemIds.length > 0 && actionContext.workItemIds[0]);
 
