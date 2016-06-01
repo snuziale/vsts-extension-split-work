@@ -203,6 +203,8 @@ function showDialog(workItemId: number) {
         height: 400,
         width: 500,
         resizable: false,
+        useBowtieStyle: true,
+        bowtieVersion: 2,
         getDialogResult: () => {
             _contribution.getDetails().then((details: { ids: number[], title: string, shouldOpenNewWorkItem: boolean }) => {
                 if (details.ids && details.ids.length > 0) {

@@ -50,3 +50,20 @@ li:hover {
 li:hover .item-action {
   display: inline; 
 }
+
+/* START: This styles are for TFS 2015.2 */
+.bowtie-style {
+    font-family: Segoe UI,Arial,sans-serif;
+    font-size: 14px;
+    line-height: normal;
+}
+.bowtie-style label {
+    display: inline !important;
+}
+
+.bowtie-style fieldset {
+    border: 0;
+    margin: 24px 0 0 0;
+    padding: 0;
+}
+/* END: This styles are for TFS 2015.2 */
