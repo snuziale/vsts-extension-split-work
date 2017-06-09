@@ -62,7 +62,7 @@ function removeLinks(workItem: TFS_Wit_Contracts.WorkItem, linkedWorkItemIds: nu
     var patchDocument = indices.map(index => createRemoveRelationPatchBlock(index));
 
     var childLinks = linkedWorkItemIds.map(id => createWorkItemHtmlLink(id)).join(", ");
-    var comment = `The follow items were ${createHtmlLink("http://aka.ms/split", "split")} to work item ${createWorkItemHtmlLink(targetId)}:<br>&nbsp;&nbsp;${childLinks}`;
+    var comment = `The following items were ${createHtmlLink("http://aka.ms/split", "split")} to ${createWorkItemHtmlLink(targetId)}:<br>&nbsp;&nbsp;${childLinks}`;
     patchDocument.push(createFieldPatchBlock(CoreFields.History, comment));
 
     return TFS_Wit_Client.getClient().updateWorkItem(patchDocument, workItem.id);
@@ -131,7 +131,7 @@ function createWorkItem(workItem: TFS_Wit_Contracts.WorkItem, title?: string, it
             patchDocument.push(createFieldPatchBlock(field, workItem.fields[field]));
         }
     });
-    var comment = `This work item was ${createHtmlLink("http://aka.ms/split", "split")} from work item ${createWorkItemHtmlLink(workItem.id)}: ${workItem.fields[CoreFields.Title]}`;
+    var comment = `This work item was ${createHtmlLink("http://aka.ms/split", "split")} from ${createWorkItemHtmlLink(workItem.id)}: ${workItem.fields[CoreFields.Title]}`;
     patchDocument.push(createFieldPatchBlock(CoreFields.History, comment));
 
     var context = VSS.getWebContext();
