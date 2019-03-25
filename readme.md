@@ -26,7 +26,7 @@ Note: To avoid `tfx` prompting for your token when publishing, login in beforeha
 
 #### Including framework modules ####
 
-The VSTS framework is setup to initalize the requirejs AMD loader, so just use `import Foo = require("foo")` to include framework modules.
+The VSTS framework is setup to initialize the requirejs AMD loader, so just use `import Foo = require("foo")` to include framework modules.
 
 #### VS Code ####
 

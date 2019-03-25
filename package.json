@@ -5,14 +5,15 @@
     "grunt-contrib-clean": "^1.0.0",
     "grunt-contrib-copy": "~1.0.0",
     "grunt-exec": "~0.4.7",
-    "tfx-cli": "^0.3.13",
-    "tsd": "~0.6.5",
-    "vss-web-extension-sdk": "^1.98.1"
+    "tfx-cli": "^0.6.4",
+    "tsd": "^0.7.0",
+    "typescript": "^3.3.4000",
+    "vss-web-extension-sdk": "^1.110.0"
   },
   "name": "split",
   "private": true,
   "version": "0.0.0",
   "dependencies": {
-    "grunt-ts": "^5.5.1"
+    "grunt-ts": "^5.5.1"    
   }
 }
