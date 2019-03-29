@@ -40,7 +40,7 @@ function createHtmlLink(link: string, text: number | string) {
 
 function createWorkItemHtmlLink(id: number): string {
     var context = VSS.getWebContext();
-    var link = `/${context.collection.name}/${context.project.name}/_workitems/edit/${id}`;
+    var link = `${context.collection.uri}${context.project.name}/_workitems/edit/${id}`;
     return createHtmlLink(link, id);
 }
 
