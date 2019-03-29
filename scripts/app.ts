@@ -40,7 +40,7 @@ function createHtmlLink(link: string, text: number | string) {
 
 function createWorkItemHtmlLink(id: number): string {
     var context = VSS.getWebContext();
-    var link = `/tfs/_permalink/_workitems/edit/${id}?collectionId=${context.collection.id}&projectId=${context.project.id}`;
+    var link = `/${context.collection.name}/${context.project.name}/_workitems/edit/${id}`;
     return createHtmlLink(link, id);
 }
 
@@ -108,7 +108,7 @@ function updateLinkRelations(sourceWorkItem: TFS_Wit_Contracts.WorkItem, targetW
 }
 
 function updateIterationPath(childIdsToMove: number[], iterationPath: string): IPromise<TFS_Wit_Contracts.WorkItem[]> {
-    var promises = [];
+    var promises: IPromise<TFS_Wit_Contracts.WorkItem>[] = [];
     childIdsToMove.forEach(childId => {
         var patchDocument = [createFieldPatchBlock(CoreFields.IterationPath, iterationPath)];
         promises.push(TFS_Wit_Client.getClient().updateWorkItem(patchDocument, childId));

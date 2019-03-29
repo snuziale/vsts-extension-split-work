@@ -1,17 +1,17 @@
 // A task runner configuration.
 {
-    "version": "0.1.0",
+    "version": "2.0.0",
     "command": "grunt",
-    "isShellCommand": true,
+    "type": "shell",
     "tasks": [
         {
-            "taskName": "build",
-            "isBuildCommand": true,
+            "label": "build",
+            "group": "build",
             "problemMatcher": "$msCompile"
         },
         {
-            "taskName": "publish",
-            "isBuildCommand": false,
+            "label": "publish",
+            "group": "build",
             "problemMatcher": "$msCompile"
         }
     ]

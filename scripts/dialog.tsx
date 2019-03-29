@@ -5,7 +5,6 @@ import * as ReactDOM from "react-dom";
 
 import TFS_Wit_Contracts = require("TFS/WorkItemTracking/Contracts");
 import TFS_Wit_Client = require("TFS/WorkItemTracking/RestClient");
-import TFS_Wit_Services = require("TFS/WorkItemTracking/Services");
 
 import {CoreFields} from "scripts/constants";
 
@@ -157,7 +156,7 @@ class DialogComponent extends React.Component<any, IDialogComponentState> {
 
     public startSplit(id: number): IPromise<boolean> {
         var client = TFS_Wit_Client.getClient();
-        return client.getWorkItem(id, null, null, "all").then(workItem => {
+        return client.getWorkItem(id, null, null, TFS_Wit_Contracts.WorkItemExpand.All).then(workItem => {
             var childIds = getChildIds(workItem);
             if (childIds.length === 0) {
                 this.setState({
@@ -171,7 +170,7 @@ class DialogComponent extends React.Component<any, IDialogComponentState> {
                 return Q(false);
             }
             return client.getWorkItems(childIds).then(children => {
-                var incompleteChildren = [];
+                var incompleteChildren = [];                             
                 for (var i = 0, len = children.length; i < len; i++) {
                     var state = children[i].fields[CoreFields.State];
                     if (ExcludedWorkItemStates.indexOf(state) === -1) {
