@@ -1,8 +1,21 @@
 {
     "compilerOptions": {
         "module": "amd",
+        "moduleResolution": "node",
         "sourceMap": false,
-        "jsx": "react"
+        "jsx": "react",
+        "types": [
+            "knockout",
+            "requirejs",
+            "jquery",
+            "react",
+            "vss-web-extension-sdk"
+        ],
+        "lib": [
+            "es2015.promise",
+            "es5",
+            "dom"
+        ]
     },
     "exclude": [
         "node_modules"

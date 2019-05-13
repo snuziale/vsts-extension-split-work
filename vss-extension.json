@@ -1,15 +1,15 @@
 {
     "manifestVersion": 1,
     "id": "vsts-extension-split-work",
-    "version": "0.1.3",
+    "version": "0.1.4",
     "name": "Split!",
     "scopes": [
         "vso.work",
         "vso.work_write"
     ],
     "description": "Split a work item to track work that will continue into the next sprint.",
-    "publisher": "blueprint",
-    "public": true,
+    "publisher": "davidcorrigan2",
+    "public": false,
     "icons": {
         "default": "img/logo.png"
     },
@@ -68,7 +68,7 @@
         }
     ],
     "categories": [
-        "Plan and track"
+        "Azure Boards"
     ],
     "contributions": [
         {

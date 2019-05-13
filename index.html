@@ -10,15 +10,11 @@
         // Initialize framework 
         VSS.init({
             explicitNotifyLoaded: true,
-            usePlatformScripts: true,
-            configureModuleLoader: true
+            usePlatformScripts: true
         });
         
         // Load main entry point for extension
-        VSS.require(["scripts/app"], function () {
-            // Loading succeeded
-            VSS.notifyLoadSucceeded();
-        });
+        VSS.require(["scripts/app"]);
     </script>
 </body>
 </html>
