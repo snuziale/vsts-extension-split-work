@@ -57,7 +57,7 @@ class CheckboxComponent extends React.Component<ICheckboxComponentProps, any> {
     }
 }
 
-class CheckboxComponent2 extends React.Component<ICheckboxComponentProps, any> {
+class TagCheckboxComponent extends React.Component<ICheckboxComponentProps, any> {
 
     public render(): JSX.Element {
         var onChange = (event: any) => {
@@ -151,7 +151,7 @@ class DialogComponent extends React.Component<any, IDialogComponentState> {
                     this.setState(Object["assign"]({}, this.state, { openNewWorkItem: value }));
                 };
 
-                var onCheckboxChange2 = (value) => {
+                var onCopyTagsChange = (value) => {
                     this.setState(Object["assign"]({}, this.state, { copyTags: value }));
                 };
 
@@ -164,7 +164,7 @@ class DialogComponent extends React.Component<any, IDialogComponentState> {
                     <TextBoxComponent value={newTitle} onChange={onTextboxChange} />
                     <ListComponent items={items} onRemove={onRemove} />
                     <CheckboxComponent checked={openNewWorkItem} onChange={onCheckboxChange} /> <br />
-                    <CheckboxComponent2 checked={copyTags} onChange={onCheckboxChange2} />
+                    <TagCheckboxComponent checked={copyTags} onChange={onCopyTagsChange} />
                 </div>;
             }
         }

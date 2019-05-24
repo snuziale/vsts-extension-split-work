@@ -221,7 +221,7 @@ function showDialog(workItemId: number) {
                     _dialog.close();
 
                     if (details.shouldOpenNewWorkItem) {
-                        VSS.getService(TFS_Wit_Services.WorkItemFormNavigationService.contributionId).then((service: any) => {
+                        VSS.getService(TFS_Wit_Services.WorkItemFormNavigationService.contributionId).then((service : TFS_Wit_Services.IWorkItemFormNavigationService) => {
                             service.openWorkItem(splitWorkItem.id);
                         });
                     }
@@ -232,10 +232,10 @@ function showDialog(workItemId: number) {
 
     VSS.getService(VSS.ServiceIds.Dialog).then((dialogSvc: IHostDialogService) => {
         var extensionCtx = VSS.getExtensionContext();
-        var contributionId = extensionCtx.publisherId + "." + extensionCtx.extensionId + ".vsts-extension-split-work-dialog";
-        dialogSvc.openDialog(contributionId, dialogOptions).then((dialog: IExternalDialog) => {
+        var splitWorkDialogContributionId = extensionCtx.publisherId + "." + extensionCtx.extensionId + ".vsts-extension-split-work-dialog";
+        dialogSvc.openDialog(splitWorkDialogContributionId , dialogOptions).then((dialog: IExternalDialog) => {
             _dialog = dialog;
-            dialog.getContributionInstance(contributionId).then((contribution: any) => {
+            dialog.getContributionInstance(splitWorkDialogContributionId ).then((contribution: any) => {
                 _contribution = contribution;
                 contribution.startSplit(workItemId).then(enable => {
                     if (enable) {

@@ -8,8 +8,8 @@
         "vso.work_write"
     ],
     "description": "Split a work item to track work that will continue into the next sprint.",
-    "publisher": "davidcorrigan2",
-    "public": false,
+    "publisher": "blueprint",
+    "public": true,
     "icons": {
         "default": "img/logo.png"
     },
