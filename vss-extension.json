@@ -88,7 +88,7 @@
             "type": "ms.vss-web.control",
             "targets": [],
             "properties": {
-                "uri": "dialog.html?id={{id}}"
+                "uri": "dialog.html"
             }
         }
     ]
