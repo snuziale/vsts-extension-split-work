@@ -1,19 +1,24 @@
 {
   "devDependencies": {
-    "grunt": "~1.0.1",
+    "@types/jquery": "^3.3.29",
+    "@types/knockout": "^3.4.65",
+    "@types/node": "^11.13.9",
+    "@types/react": "^15.6.24",
+    "@types/react-dom": "^15.5.0",
+    "@types/requirejs": "^2.1.31",
+    "grunt": "^1.0.4",
     "grunt-cli": "^1.2.0",
     "grunt-contrib-clean": "^1.0.0",
     "grunt-contrib-copy": "~1.0.0",
     "grunt-exec": "~0.4.7",
     "tfx-cli": "^0.6.4",
-    "tsd": "^0.7.0",
-    "typescript": "^3.3.4000",
-    "vss-web-extension-sdk": "^1.110.0"
+    "typescript": "^3.0.1",
+    "vss-web-extension-sdk": "^5.141.0"
   },
   "name": "split",
   "private": true,
   "version": "0.0.0",
   "dependencies": {
-    "grunt-ts": "^5.5.1"    
+    "grunt-ts": "^6.0.0-beta.22"
   }
 }

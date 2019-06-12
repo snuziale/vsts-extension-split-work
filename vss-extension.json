@@ -1,7 +1,7 @@
 {
     "manifestVersion": 1,
     "id": "vsts-extension-split-work",
-    "version": "0.1.3",
+    "version": "0.1.4",
     "name": "Split!",
     "scopes": [
         "vso.work",
@@ -68,7 +68,7 @@
         }
     ],
     "categories": [
-        "Plan and track"
+        "Azure Boards"
     ],
     "contributions": [
         {
@@ -88,7 +88,7 @@
             "type": "ms.vss-web.control",
             "targets": [],
             "properties": {
-                "uri": "dialog.html?id={{id}}"
+                "uri": "dialog.html"
             }
         }
     ]

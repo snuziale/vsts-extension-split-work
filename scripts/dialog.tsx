@@ -1,12 +1,10 @@
-import Q = require("q");
-
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
 import TFS_Wit_Contracts = require("TFS/WorkItemTracking/Contracts");
 import TFS_Wit_Client = require("TFS/WorkItemTracking/RestClient");
 
-import {CoreFields} from "scripts/constants";
+import {CoreFields} from "./constants";
 
 var ExcludedWorkItemStates = ["Closed", "Removed", "Cut", "Done", "Completed"];
 
@@ -59,6 +57,19 @@ class CheckboxComponent extends React.Component<ICheckboxComponentProps, any> {
     }
 }
 
+class TagCheckboxComponent extends React.Component<ICheckboxComponentProps, any> {
+
+    public render(): JSX.Element {
+        var onChange = (event: any) => {
+            this.props.onChange(event.target.checked);
+        }
+
+        return <div>
+            <input type="checkbox" id="tags" checked={this.props.checked} onChange={onChange} /><label htmlFor="tags">Copy tags to new work item</label>
+        </div>;
+    }
+}
+
 interface IListComponentProps extends React.Props<void> {
     items: { key: string | number, title: string }[];
     onRemove: (key: string | number) => void;
@@ -96,6 +107,7 @@ interface IDialogComponentState {
     selectedIds: number[];
     newTitle: string;
     openNewWorkItem: boolean;
+    copyTags: boolean;
 }
 
 class DialogComponent extends React.Component<any, IDialogComponentState> {
@@ -108,13 +120,14 @@ class DialogComponent extends React.Component<any, IDialogComponentState> {
             children: [],
             selectedIds: [],
             newTitle: "",
-            openNewWorkItem: false
+            openNewWorkItem: false,
+            copyTags: false
         };
     }
 
     public render() {
         if (this.state.loadState === LoadingState.Loaded) {
-            let { workItem, children, selectedIds, newTitle, openNewWorkItem } = this.state;
+            let { workItem, children, selectedIds, newTitle, openNewWorkItem, copyTags } = this.state;
             if (!children || children.length === 0) {
                 return <div>
                     <div>There are no children to be split from this work item.</div>
@@ -138,6 +151,10 @@ class DialogComponent extends React.Component<any, IDialogComponentState> {
                     this.setState(Object["assign"]({}, this.state, { openNewWorkItem: value }));
                 };
 
+                var onCopyTagsChange = (value) => {
+                    this.setState(Object["assign"]({}, this.state, { copyTags: value }));
+                };
+
                 var onRemove = (key: string | number) => {
                     this.setState(Object["assign"]({}, this.state, { selectedIds: selectedIds.filter(i => i !== key) }));
                 };
@@ -146,7 +163,8 @@ class DialogComponent extends React.Component<any, IDialogComponentState> {
                     <div>{description}</div>
                     <TextBoxComponent value={newTitle} onChange={onTextboxChange} />
                     <ListComponent items={items} onRemove={onRemove} />
-                    <CheckboxComponent checked={openNewWorkItem} onChange={onCheckboxChange} />
+                    <CheckboxComponent checked={openNewWorkItem} onChange={onCheckboxChange} /> <br />
+                    <TagCheckboxComponent checked={copyTags} onChange={onCopyTagsChange} />
                 </div>;
             }
         }
@@ -165,9 +183,12 @@ class DialogComponent extends React.Component<any, IDialogComponentState> {
                     children: [],
                     selectedIds: [],
                     newTitle: "",
-                    openNewWorkItem: false
+                    openNewWorkItem: false,
+                    copyTags: false
                 });
-                return Q(false);
+                return new Promise(function (resolve){
+                    resolve(false);
+                })
             }
             return client.getWorkItems(childIds).then(children => {
                 var incompleteChildren = [];                             
@@ -184,10 +205,13 @@ class DialogComponent extends React.Component<any, IDialogComponentState> {
                     loadState: LoadingState.Loaded,
                     selectedIds: incompleteChildren.map(c => c.id),
                     newTitle: workItem.fields[CoreFields.Title],
-                    openNewWorkItem: true
+                    openNewWorkItem: true,
+                    copyTags: true
                 });
 
-                return Q(this.state.selectedIds.length > 0);
+                return new Promise( (resolve) => {
+                    resolve(this.state.selectedIds.length > 0);
+                });
             });
         });
     }
@@ -199,14 +223,15 @@ ReactDOM.render(<DialogComponent ref={(i) => dialogComponent = i} />, element);
 
 var dialog = {
     startSplit: (id: number) => dialogComponent.startSplit(id),
-    getDetails: (): { ids: number[], title: string, shouldOpenNewWorkItem: boolean } => {
+    getDetails: (): { ids: number[], title: string, shouldOpenNewWorkItem: boolean, shouldCopyTags: boolean } => {
         return {
             ids: dialogComponent.state.selectedIds,
             title: dialogComponent.state.newTitle,
-            shouldOpenNewWorkItem: dialogComponent.state.openNewWorkItem
+            shouldOpenNewWorkItem: dialogComponent.state.openNewWorkItem,
+            shouldCopyTags: dialogComponent.state.copyTags
         };
     }
 };
 
-VSS.register("blueprint.vsts-extension-split-work.vsts-extension-split-work-dialog", dialog);
-VSS.register("vsts-extension-split-work-dialog", dialog);
+VSS.register(VSS.getContribution().id, dialog);
+VSS.notifyLoadSucceeded();

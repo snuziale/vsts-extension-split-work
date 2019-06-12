@@ -7,4 +7,5 @@ export module CoreFields {
     export var State = "System.State";
     export var Title = "System.Title";
     export var WorkItemType = "System.WorkItemType";
+    export var Tags = "System.Tags";
 }
