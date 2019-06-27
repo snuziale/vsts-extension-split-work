@@ -7,6 +7,7 @@
 * Retains all attachments
 * Copies description to new work item
 * Inserts comment revision with links detailing the split operation 
+* Optionally copies all tags
 
 ## How does it work? 
 Use the context menu of a work item from the board or backlog to **Split** a work item with unfinished work into the next sprint.
