@@ -1,5 +1,11 @@
 ## Split! ##
 
+#### Customizing this extension ####
+
+This extension does a best effort to copy relevant information - including Title, AssignedTo, AreaPath, Description and any required fields. You may want additional custom fields to copy on split. We cannot support everyone's custom configuration, so we've tried to make it easy to clone this repo and create your own version of this extension. 
+
+If you think your change would benefit others - please contribute to the master extension! 
+
 ### Structure ###
 
 ```
@@ -13,20 +19,24 @@ index.html          - Main entry point
 dialog.html         - Dialog html
 vss-extension.json  - Extension manifest
 ```
-
 #### Grunt ####
 
 Three basic `grunt` tasks are defined:
 
 * `build` - Compiles TS files in `scripts` folder
 * `package` - Builds the vsix package
-* `publish` - Publishes the extension to the marketplace using `tfx-cli`
+* `publishLocal` - Publishes the extension to your local box marketplace using `tfx-cli`
 
 Note: To avoid `tfx` prompting for your token when publishing, login in beforehand using `tfx login` and the service uri of ` https://app.market.visualstudio.com`.
 
-#### Including framework modules ####
+#### Setup for custom extensions ####
 
-The VSTS framework is setup to initialize the requirejs AMD loader, so just use `import Foo = require("foo")` to include framework modules.
+1. Run npm install 
+2. Look for "Hello custom extension author" for common extension customization points
+3. Change the publisher in the vss-extension.json
+4. grunt build
+5. grunt package
+6. Upload to your on-prem instance via http://myAzureDevopsServer/_gallery/manage
 
 #### VS Code ####
 

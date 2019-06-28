@@ -1,11 +1,11 @@
 **Split!** enables teams to easily continue unfinished work items into the next sprint by “splitting” the work item into a new card in the next sprint. 
 
 ## What's special about Split?
-* Smart detects incomplete tasks
+* Smart detects incomplete tasks - even for processes with custom states
 * Defaults split work item to the next iteration
 * Maintains parent link
 * Retains all attachments
-* Copies description to new work item
+* Copies description, repro steps, acceptance criteria and any required fields to new work item
 * Inserts comment revision with links detailing the split operation 
 * Optionally copies all tags
 
