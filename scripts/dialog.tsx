@@ -4,9 +4,10 @@ import * as ReactDOM from "react-dom";
 import TFS_Wit_Contracts = require("TFS/WorkItemTracking/Contracts");
 import TFS_Wit_Client = require("TFS/WorkItemTracking/RestClient");
 
-import {CoreFields} from "./constants";
+import { CoreFields } from "./constants";
 
-var ExcludedWorkItemStates = ["Closed", "Removed", "Cut", "Done", "Completed"];
+const DefaultExcludedWorkItemStates = ["Closed", "Removed", "Cut", "Done", "Completed"];
+const ExcludedWorkItemMetaStates = ["Completed", "Removed"];
 
 enum LoadingState {
     Loading,
@@ -96,7 +97,7 @@ class ListComponent extends React.Component<IListComponentProps, any> {
             </li>;
         };
 
-        return <ul className="list">{this.props.items.map(createItem) }</ul>;
+        return <ul className="list">{this.props.items.map(createItem)}</ul>;
     }
 }
 
@@ -135,7 +136,7 @@ class DialogComponent extends React.Component<any, IDialogComponentState> {
                 </div>;
             }
             else {
-                let description = ["Below are the incomplete items for ", <strong>{workItem.fields[CoreFields.WorkItemType]}: {workItem.id}</strong>, ".  Split to continue them in your next sprint."];
+                let description = ["Below are the incomplete items for ", <strong key={workItem.id}>{workItem.fields[CoreFields.WorkItemType]}: {workItem.id}</strong>, ".  Split to continue them in your next sprint."];
                 let items = children.filter(workitem => selectedIds.indexOf(workitem.id) !== -1).map(child => {
                     return {
                         key: child.id,
@@ -172,48 +173,71 @@ class DialogComponent extends React.Component<any, IDialogComponentState> {
     }
 
 
-    public startSplit(id: number): IPromise<boolean> {
+    public async startSplit(id: number): Promise<boolean> {
         var client = TFS_Wit_Client.getClient();
-        return client.getWorkItem(id, null, null, TFS_Wit_Contracts.WorkItemExpand.All).then(workItem => {
-            var childIds = getChildIds(workItem);
-            if (childIds.length === 0) {
-                this.setState({
-                    loadState: LoadingState.Loaded,
-                    workItem: null,
-                    children: [],
-                    selectedIds: [],
-                    newTitle: "",
-                    openNewWorkItem: false,
-                    copyTags: false
-                });
-                return new Promise(function (resolve){
-                    resolve(false);
-                })
-            }
-            return client.getWorkItems(childIds).then(children => {
-                var incompleteChildren = [];                             
-                for (var i = 0, len = children.length; i < len; i++) {
-                    var state = children[i].fields[CoreFields.State];
-                    if (ExcludedWorkItemStates.indexOf(state) === -1) {
-                        incompleteChildren.push(children[i]);
-                    }
+        const context = VSS.getWebContext();
+
+        const workItem = await client.getWorkItem(id, null, null, TFS_Wit_Contracts.WorkItemExpand.All)
+        var childIds = getChildIds(workItem);
+
+        // Display "No children to be split"
+        if (childIds.length === 0) {
+            this.setState({
+                loadState: LoadingState.Loaded,
+                workItem: null,
+                children: [],
+                selectedIds: [],
+                newTitle: "",
+                openNewWorkItem: false,
+                copyTags: false
+            });
+            return false;
+        }
+        else {                     
+            var workItemTypeToExcludedStates = {};
+            var incompleteChildren = [];
+
+            const children = await client.getWorkItems(childIds)   
+
+            for (var i = 0, len = children.length; i < len; i++) {
+                const childItem = children[i];
+                const childItemType = childItem.fields[CoreFields.WorkItemType];
+                
+                // We need to determine this child's specific "Completed" and "Removed" states (may be custom depending on process)
+                // For example, "Closed" state is from the "Completed" category. Some users may have a custom process with additional 
+                // states in "Completed" or "Removed". After fetching, store each type's states in a dictionary 
+                if (!workItemTypeToExcludedStates[childItemType]) {
+                    const states = await client.getWorkItemTypeStates(context.project.name, childItem.fields[CoreFields.WorkItemType]);
+                    const stateNamesInExcludedCategory = []; 
+                    states.forEach(s => {
+                        if (s.category === ExcludedWorkItemMetaStates[0] || s.category === ExcludedWorkItemMetaStates[1]){
+                            stateNamesInExcludedCategory.push(s.name); 
+                        }
+                    })
+                    
+                    workItemTypeToExcludedStates[childItemType] = stateNamesInExcludedCategory; 
                 }
 
-                this.setState({
-                    workItem: workItem,
-                    children: incompleteChildren,
-                    loadState: LoadingState.Loaded,
-                    selectedIds: incompleteChildren.map(c => c.id),
-                    newTitle: workItem.fields[CoreFields.Title],
-                    openNewWorkItem: true,
-                    copyTags: true
-                });
+                // Check if this child work item is in an incomplete state ("Proposed", "In Progress", or "Resolved")
+                const excludedStates = workItemTypeToExcludedStates[childItemType] || DefaultExcludedWorkItemStates;
+                const childState = children[i].fields[CoreFields.State];
+                if (excludedStates.indexOf(childState) === -1) {
+                    incompleteChildren.push(children[i]);
+                }
+            }
 
-                return new Promise( (resolve) => {
-                    resolve(this.state.selectedIds.length > 0);
-                });
+            this.setState({
+                workItem: workItem,
+                children: incompleteChildren,
+                loadState: LoadingState.Loaded,
+                selectedIds: incompleteChildren.map(c => c.id),
+                newTitle: workItem.fields[CoreFields.Title],
+                openNewWorkItem: true,
+                copyTags: true
             });
-        });
+
+            return this.state.selectedIds.length > 0;             
+        }
     }
 }
 

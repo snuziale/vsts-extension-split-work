@@ -15,11 +15,6 @@
                 stdout: true,
                 stderr: true
             },
-            publish: {
-                command: "tfx extension publish --manifest-globs vss-extension.json",
-                stdout: true,
-                stderr: true
-            },
             publishlocal: {
                 command: "tfx extension publish --manifest-globs vss-extension.json --service-url http://localhost:8080/tfs/",
                 stdout: true,
