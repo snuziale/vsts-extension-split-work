@@ -145,7 +145,7 @@ async function createWorkItem(workItem: TFS_Wit_Contracts.WorkItem, copyTags: bo
     workItemTypeInfo.fields.forEach(f => {
         // Don't include iteration related fields or state, we don't want that copied from the current work item        
         const isIgnoredField = ignoreCaseComparer(f.referenceName, AdditionalFields.IterationId) === 0 || ignoreCaseComparer(f.referenceName, CoreFields.State) === 0;
-        const isRequiredField = f.alwaysRequired;        
+        const isRequiredField = f.alwaysRequired;
         if (isRequiredField && !isIgnoredField) {
             if (!isFieldInArray(f.referenceName, fieldsToCopy)) {
                 fieldsToCopy.push(f.referenceName);
