@@ -14,7 +14,7 @@ function createFieldPatchBlock(field: string, value: string): any {
     return {
         "op": "add",
         "path": "/fields/" + field,
-        "value": value || ""
+        "value": value === undefined ? "" : value
     };
 }
 
@@ -145,7 +145,7 @@ async function createWorkItem(workItem: TFS_Wit_Contracts.WorkItem, copyTags: bo
     workItemTypeInfo.fields.forEach(f => {
         // Don't include iteration related fields or state, we don't want that copied from the current work item        
         const isIgnoredField = ignoreCaseComparer(f.referenceName, AdditionalFields.IterationId) === 0 || ignoreCaseComparer(f.referenceName, CoreFields.State) === 0;
-        const isRequiredField = f.alwaysRequired;
+        const isRequiredField = f.alwaysRequired;        
         if (isRequiredField && !isIgnoredField) {
             if (!isFieldInArray(f.referenceName, fieldsToCopy)) {
                 fieldsToCopy.push(f.referenceName);
@@ -212,13 +212,6 @@ async function performSplit(id: number, childIdsToMove: number[], copyTags: bool
     await updateLinkRelations(sourceWorkItem, targetWorkItem, childIdsToMove);
     await updateIterationPath(childIdsToMove, iterationPath)
     return targetWorkItem;
-}
-
-function getChildIds(workItem: TFS_Wit_Contracts.WorkItem): number[] {
-    return !workItem.relations ? [] : workItem.relations.filter(relation => relation.rel === "System.LinkTypes.Hierarchy-Forward").map(relation => {
-        var url = relation.url;
-        return parseInt(url.substr(url.lastIndexOf("/") + 1), 10);
-    });
 }
 
 function showDialog(workItemId: number) {
