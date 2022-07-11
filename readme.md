@@ -1,5 +1,7 @@
 ## Split! ##
 
+**Great news! The extension now has a new maintainer and will be supported open-source at https://github.com/microsoft/azure-boards-split! Please use the new repository for contributions and issues.**
+
 #### Customizing this extension ####
 
 This extension does a best effort to copy relevant information - including Title, AssignedTo, AreaPath, Description and any required fields. You may want additional custom fields to copy on split. We cannot support everyone's custom configuration, so we've tried to make it easy to clone this repo and create your own version of this extension. 
